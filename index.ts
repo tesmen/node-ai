@@ -10,8 +10,7 @@ import { BookProcessor } from './src/services/BookProcessor';
       }
     );
     try {
-        await model.trainTheBook();
-        model.generate('');
+        model.prompt('small town');
     } catch (e) {
         console.log(e);
     }
