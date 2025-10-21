@@ -125,7 +125,7 @@ class CharTokenizer {
     }
 
     encode(s) {
-        return s.split('').map(ch => this.stoi.get(ch) ?? 0)
+        return s.split(' ').map(ch => this.stoi.get(ch) ?? 0)
     }
 
     decode(ids) {
@@ -183,16 +183,18 @@ class TinyGPT {
         for(let t = 0; t < T; t++) {
             const tok = this.wte[inputIds[t]]
             const pos = this.wpe[t]
-            for(let j = 0; j < nEmbd; j++) X[t][j] = tok[j] + pos[j]
+            for(let j = 0; j < nEmbd; j++) {
+                X[t][j] = tok[j] + pos[j]
+            }
         }
 
         // --- Block 1: LN -> self-attn -> residual
-        const X1 = layerNormRowwise(X, 1e-5, this.ln1_g, this.ln1_b)
+        const normalizedX = layerNormRowwise(X, 1e-5, this.ln1_g, this.ln1_b)
 
         // Project to Q,K,V
-        const Q = matmul(X1, this.Wq) // [T, C]
-        const K = matmul(X1, this.Wk)
-        const V = matmul(X1, this.Wv)
+        const Q = matmul(normalizedX, this.Wq) // [T, C]
+        const K = matmul(normalizedX, this.Wk)
+        const V = matmul(normalizedX, this.Wv)
 
         // Scaled dot-product attention with causal mask
         // scores = Q K^T / sqrt(C)
@@ -243,6 +245,7 @@ class TinyGPT {
     // Sample one token at a time (greedy or top-k)
     generate(promptIds, maxNewTokens = 50, topK = 0) {
         let ids = promptIds.slice()
+        console.log({ ids })
 
         for(let step = 0; step < maxNewTokens; step++) {
             const ctx = ids.slice(-this.cfg.nCtx) // crop to context window
@@ -349,5 +352,4 @@ function getCorpus() {
 
 if(require.main === module) {
     demo()
-    // getCorpus()
 }

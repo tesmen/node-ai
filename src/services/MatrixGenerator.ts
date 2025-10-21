@@ -1,10 +1,10 @@
 export class MatrixGenerator {
 
-    generate(dim: number): number[] {
+    generate(dim: number, magnitude: number): number[] {
         const res: number[] = [];
 
         for (let i = 0; i < dim; i++) {
-            res.push(Math.random());
+            res.push(magnitude - Math.random() * magnitude);
         }
 
         return res;
