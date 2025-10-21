@@ -306,16 +306,16 @@ function demo() {
         'gpt in js\n'
 
     const corpus = getCorpus()
-    const tok = new CharTokenizer(corpus)
-    const cfg = { vocabSize: tok.vocabSize, nEmbd: 64, nHidden: 128, nCtx: 64 }
+    const tokenizer = new CharTokenizer(corpus)
+    const cfg = { vocabSize: tokenizer.vocabSize, nEmbd: 64, nHidden: 128, nCtx: 64 }
     const model = new TinyGPT(cfg)
 
-    const prompt = 'The day they met '
-    const ids = tok.encode(prompt)
+    const prompt = 'that you have room on your small world '
+    const ids = tokenizer.encode(prompt)
     const out = model.generate(ids, 120, 20) // generate 120 tokens with top-k 20
-    const text = tok.decode(out)
+    const text = tokenizer.decode(out)
 
-    console.log('Vocab size:', tok.vocabSize)
+    console.log('Vocab size:', tokenizer.vocabSize)
     console.log('Prompt:', JSON.stringify(prompt))
     console.log('Generated (random weights, will be gibberish):\n')
     console.log(text)
@@ -333,7 +333,14 @@ function getCorpus() {
     let text = ''
 
     for(const textKey of list) {
-        text += fs.readFileSync(`./books/${textKey}`).toString()
+        const cleaned = fs
+            .readFileSync(`./books/${textKey}`)
+            .toString()
+            .replaceAll(/\W/g , ' ')
+            .toLowerCase()
+        // console.log(cleaned)
+        // process.exit()
+        text += cleaned
     }
 
     console.log(`Corpus length: ${text.length}`)
