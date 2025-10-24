@@ -8,4 +8,8 @@ export class FileServiceAdapter {
     readFileSync(file: string): Buffer {
         return fs.readFileSync(file);
     }
+
+    writeFileSync(file: string, data: string) {
+        return fs.writeFileSync(file, data);
+    }
 }

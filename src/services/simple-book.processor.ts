@@ -2,13 +2,13 @@ import { ModelConfig } from '../interfaces/ModelConfig';
 import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
 
-type Vector = number[] | Float32Array;
+type Vector = number[];
 type Matrix = Vector[];
 
 export class SimpleBookProcessor {
     wte: Matrix = [];
     wpe: Matrix = [];
-    private fileService: FileServiceAdapter;
+    fileService: FileServiceAdapter;
     private tokenizer: CharTokenizer;
     private cfg: ModelConfig;
 
@@ -18,29 +18,42 @@ export class SimpleBookProcessor {
         this.tokenizer = new CharTokenizer(this.getCorpus(cfg.corpusFile));
         console.log('vocab size', this.tokenizer.vocabSize);
 
-        // Embeddings
-        this.wte = this.zeros(this.tokenizer.vocabSize, cfg.nEmbd); // token embeddings
-        this.wpe = this.zeros(cfg.nCtx, cfg.nEmbd);      // positional embeddings
 
-        [this.wte, this.wpe,
-            // this.Wq, this.Wk, this.Wv, this.Wo, this.W1, this.W2, this.Wout
-        ].forEach(this.initMat);
+        // Embeddings
+        if (cfg.wpeFile) {
+            this.wte = JSON.parse(this.fileService.readFileSync(cfg.wteFile).toString());
+            console.log('WTE read from file');
+        } else {
+            this.wte = this.zeros(this.tokenizer.vocabSize, cfg.nEmbd); // token embeddings
+            [this.wte].forEach(this.initMat);
+        }
+
+        if (cfg.wpeFile) {
+            this.wpe = JSON.parse(this.fileService.readFileSync(cfg.wpeFile).toString());
+            console.log('WPE read from file');
+            // console.log(this.wpe);
+        } else {
+            this.wpe = this.zeros(cfg.nCtx, cfg.nEmbd);      // positional embeddings
+            [this.wpe].forEach(this.initMat);
+        }
+        console.log(cfg, { wpe: this.wpe.length, wte: this.wte.length });
     }
 
-    generate(prompt: string, maxNewTokens: number = 30) {
+    generate(prompt: string, maxNewTokens: number = 1) {
         const ids = this.tokenizer.encode(prompt);
-
-        console.log(ids);
+        // console.log(ids);
 
         for (let step = 0; step < maxNewTokens; step++) {
             const logits = this.forward(ids);
+            ids.push(logits.shift());
         }
 
-        return '';
+        return this.tokenizer.decode(ids);
     }
 
-    forward(inputIds: number[]) {
+    buildPromptMatrix(inputIds: number[]) {
         let promptMatrix = this.zeros(inputIds.length, this.cfg.nEmbd);
+        console.log(promptMatrix);
 
         for (let inputsArrIndex = 0; inputsArrIndex < inputIds.length; inputsArrIndex++) {
             const token = this.wte[inputIds[inputsArrIndex]];
@@ -51,16 +64,28 @@ export class SimpleBookProcessor {
             }
         }
 
+        return promptMatrix;
+    }
+
+    forward(inputIds: number[]) {
+        let promptMatrix = this.buildPromptMatrix(inputIds);
+        // console.log({ promptMatrix });
         const normalizedX = this.layerNormRowwise(promptMatrix, 1e-5);
+        // console.log({ normalizedX })
         const resultingVector = this.reduceM2Vector(normalizedX);
-        const normalizedResVector = this.normalizeVector(resultingVector)
+        // console.log({ resultingVector })
+        const normalizedResVector = this.normalizeVector(resultingVector);
+        // console.log({ normalizedResVector });
+
         const candidates = this.findTopKCandidates(normalizedResVector, this.wte);
-        console.log(this.tokenizer.decode(candidates))
+        // console.log(candidates)
+
+        return candidates;
     }
 
     reduceM2Vector(M: Matrix): Vector {
         const vectorLength = M[0].length;
-        const res = new Float32Array(vectorLength);
+        const res: Vector = (new Array(vectorLength)).fill(0);
 
         for (let i = 0; i < M.length; i++) {
             for (let j = 0; j < vectorLength; j++) {
@@ -69,14 +94,14 @@ export class SimpleBookProcessor {
         }
 
         // console.log({ res })
-        return res as Vector;
+        return res;
     }
 
     zeros(rows: number, cols: number): Matrix {
         const array = new Array(rows);
 
         for (let i = 0; i < rows; i++) {
-            array[i] = new Float32Array(cols);
+            array[i] = new Array(cols);
         }
 
         return array;
@@ -118,7 +143,6 @@ export class SimpleBookProcessor {
     }
 
     normalizeVector(v: Vector) {
-        // @ts-ignore
         const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
 
         return v.map(x => x / (norm || 1));

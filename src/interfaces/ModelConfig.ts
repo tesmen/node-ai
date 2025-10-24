@@ -4,4 +4,6 @@ export interface ModelConfig {
     nEmbd?: number;
     vocabSize?: number | null;
     corpusFile: string;
+    wpeFile?: string;
+    wteFile?: string;
 }
