@@ -1,17 +1,16 @@
-import { BookProcessor } from './src/services/BookProcessor';
+import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
 (async () => {
-    const model = new BookProcessor(
+    const model = new SimpleBookProcessor(
       {
-          corpusFile: './books1/0 - Asimov, Isaac - Foundation Trilogy.txt',
+          corpusFile: './books/candp.min.txt',
           nEmbd: 64,
           nHidden: 128,
           nCtx: 64
       }
     );
     try {
-        await model.trainTheBook();
-        model.generate('');
+        model.generate('most other parts');
     } catch (e) {
         console.log(e);
     }

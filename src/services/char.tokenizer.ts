@@ -13,8 +13,9 @@ export class CharTokenizer {
           .filter(element => !this.skip.has(element))
         );
 
-        this.itos = Array.from(set).sort();
-        this.stoi = new Map(this.itos.map((ch, i) => [ch, i]));
+        this.itos = Array.from(set)
+          // .sort();
+        this.stoi = new Map(this.itos.map((char, index) => [char, index]));
         this.vocabSize = this.itos.length;
     }
 
