@@ -19,7 +19,7 @@ export class SimpleBookProcessor {
         console.log('vocab size', this.tokenizer.vocabSize);
 
         // Embeddings
-        if (cfg.wpeFile) {
+        if (cfg.wteFile) {
             this.wte = JSON.parse(this.fileService.readFileSync(cfg.wteFile).toString());
             console.log('WTE read from file');
         } else {
