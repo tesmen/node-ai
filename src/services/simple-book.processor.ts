@@ -30,7 +30,6 @@ export class SimpleBookProcessor {
         if (cfg.wpeFile) {
             this.wpe = JSON.parse(this.fileService.readFileSync(cfg.wpeFile).toString());
             console.log('WPE read from file');
-            // console.log(this.wpe);
         } else {
             this.wpe = this.zeros(cfg.nCtx, cfg.nEmbd);      // positional embeddings
             [this.wpe].forEach(this.initMat);
