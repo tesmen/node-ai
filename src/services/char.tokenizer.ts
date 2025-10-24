@@ -28,4 +28,8 @@ export class CharTokenizer {
           .map(i => this.itos[i] ?? '<UT>')
           .join(' ');
     }
+
+    decodeSingle(id: number) {
+        return this.itos[id] ?? '<UT>'
+    }
 }

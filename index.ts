@@ -12,9 +12,9 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
           nCtx: 64
       }
     );
+
     try {
         const response = model.generate('most other parts');
-
         console.log(response);
     } catch (e) {
         console.log(e);

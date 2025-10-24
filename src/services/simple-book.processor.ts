@@ -18,7 +18,6 @@ export class SimpleBookProcessor {
         this.tokenizer = new CharTokenizer(this.getCorpus(cfg.corpusFile));
         console.log('vocab size', this.tokenizer.vocabSize);
 
-
         // Embeddings
         if (cfg.wpeFile) {
             this.wte = JSON.parse(this.fileService.readFileSync(cfg.wteFile).toString());
@@ -53,7 +52,7 @@ export class SimpleBookProcessor {
 
     buildPromptMatrix(inputIds: number[]) {
         let promptMatrix = this.zeros(inputIds.length, this.cfg.nEmbd);
-        console.log(promptMatrix);
+        // console.log({ promptMatrix });
 
         for (let inputsArrIndex = 0; inputsArrIndex < inputIds.length; inputsArrIndex++) {
             const token = this.wte[inputIds[inputsArrIndex]];
@@ -112,7 +111,7 @@ export class SimpleBookProcessor {
         for (let i = 0; i < M.length; i++) {
 
             for (let j = 0; j < M[i].length; j++) {
-                M[i][j] = magnitude - Math.random() * magnitude;
+                M[i][j] = magnitude / 2 - Math.random() * magnitude;
             }
         }
     };
@@ -124,21 +123,37 @@ export class SimpleBookProcessor {
 
     dot(a: Vector, b: Vector) {
         let sum = 0;
-        for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
+        for (let i = 0; i < a.length; i++) {
+            sum += a[i] * b[i];
+        }
 
         return sum;
     }
 
     findTopKCandidates(v: Vector, embeddings: Matrix, k = 5) {
+        // console.log(`Looking for candidate`, v);
         const scores = embeddings.map(e => this.dot(v, e)); // dot product for each token
+        console.log(
+          scores
+            .map((score, index) => {
+                return {
+                    index,
+                    token: this.tokenizer.decodeSingle(index),
+                    score,
+                };
+
+            })
+            .sort((a, b) => b.score - a.score)
+        );
+
 
         // get indices sorted by score (descending)
         const sortedIndices = scores
-          .map((s, i) => [s, i])
+          .map((score, index) => [score, index])
           .sort((a, b) => b[0] - a[0])
           .slice(0, k)
           .map(([_, i]) => i);
-
+        // console.log({ sortedIndices })
         return sortedIndices; // top-k token indices
     }
 
