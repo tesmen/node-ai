@@ -41,6 +41,11 @@ function zeros(rows, cols) {
     return a
 }
 
+/**
+ * @param {Matrix} A
+ * @param {Matrix} B
+ * @returns {any[]}
+ */
 function matmul(A, B) {
     // A: [m,k], B: [k,n] -> [m,n]
     const m = A.length, k = A[0].length, n = B[0].length
@@ -67,11 +72,19 @@ function softmaxRowwise(X) {
     const out = zeros(m, n)
     for(let i = 0; i < m; i++) {
         let maxv = -Infinity
-        for(let j = 0; j < n; j++) maxv = Math.max(maxv, X[i][j])
+        for(let j = 0; j < n; j++) {
+            maxv = Math.max(maxv, X[i][j])
+        }
+
         let sum = 0
-        for(let j = 0; j < n; j++) sum += Math.exp(X[i][j] - maxv)
+        for(let j = 0; j < n; j++) {
+            sum += Math.exp(X[i][j] - maxv)
+        }
+
         const inv = 1 / sum
-        for(let j = 0; j < n; j++) out[i][j] = Math.exp(X[i][j] - maxv) * inv
+        for(let j = 0; j < n; j++) {
+            out[i][j] = Math.exp(X[i][j] - maxv) * inv
+        }
     }
     return out
 }
@@ -90,6 +103,13 @@ function geluRowwise(X) {
     return out
 }
 
+/**
+ * @param {Matrix} X
+ * @param eps
+ * @param {Vector} gamma
+ * @param {Vector} beta
+ * @returns {any[]}
+ */
 function layerNormRowwise(X, eps = 1e-5, gamma = null, beta = null) {
     const m = X.length, n = X[0].length
     const out = zeros(m, n)
@@ -204,7 +224,11 @@ class TinyGPT {
         for(let i = 0; i < T; i++) {
             for(let j = 0; j <= i; j++) { // causal: j <= i
                 let dot = 0
-                for(let c = 0; c < C; c++) dot += Q[i][c] * K[j][c]
+
+                for(let c = 0; c < C; c++) {
+                    dot += Q[i][c] * K[j][c]
+                }
+
                 scores[i][j] = dot * scale
             }
             for(let j = i + 1; j < T; j++) scores[i][j] = -1e9 // mask future

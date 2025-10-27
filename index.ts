@@ -1,16 +1,23 @@
-import { BookProcessor } from './src/services/BookProcessor';
+import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
 (async () => {
-    const model = new BookProcessor(
+    const model = new SimpleBookProcessor(
       {
-          corpusFile: './books1/0 - Asimov, Isaac - Foundation Trilogy.txt',
-          nEmbd: 64,
+          corpusFile: './books/candp.min.txt',
+          // corpusFile: './books/candp.txt',
+          wpeFile: './weights/wpe.json',
+          wteFile: './weights/wte.json',
+          nEmbd: 16,
           nHidden: 128,
           nCtx: 64
       }
     );
+
+    model.train(10)
+
     try {
-        model.prompt('small town');
+        // const response = model.generate('most other');
+        // console.log('response', response);
     } catch (e) {
         console.log(e);
     }

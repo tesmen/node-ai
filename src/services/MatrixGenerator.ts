@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 export class MatrixGenerator {
 
     generate(dim: number, magnitude: number): number[] {
