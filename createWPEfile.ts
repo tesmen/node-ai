@@ -9,14 +9,6 @@ const model = new SimpleBookProcessor(
       nCtx: 64
   }
 );
-// const zeros = model.zeros(3, 3);
-// console.log(zeros);
-// model.initMat(zeros);
-// console.log(zeros);
-// console.log(JSON.stringify(zeros));
 
-// console.log(
-//   JSON.stringify(model.wpe)
-// );
-
-model.fileService.writeFileSync('./weights/wte.json', JSON.stringify(model.wpe));
+model.fileService.writeFileSync('./weights/wpe.json', JSON.stringify(model.wpe));
+model.fileService.writeFileSync('./weights/wte.json', JSON.stringify(model.wte));

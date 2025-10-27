@@ -29,7 +29,7 @@ export class CharTokenizer {
           .join(' ');
     }
 
-    decodeSingle(id: number) {
+    embed(id: number) {
         return this.itos[id] ?? '<UT>'
     }
 }

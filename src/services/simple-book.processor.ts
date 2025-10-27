@@ -115,6 +115,20 @@ export class SimpleBookProcessor {
         }
     };
 
+    initNormalizedMat(M: Matrix = []): void {
+        const matrixSize = M[0].length;
+
+        for (let i = 0; i < M.length; i++) {
+            const vector: Vector = [];
+
+            for (let j = 0; j < matrixSize; j++) {
+                vector.push(1 - 2 * Math.random());
+            }
+
+            M[i] = this.normalizeVector(vector);
+        }
+    };
+
     getCorpus(name: string): string {
         const content = this.fileService.readFileSync(name);
         return content.toString();
@@ -137,10 +151,9 @@ export class SimpleBookProcessor {
             .map((score, index) => {
                 return {
                     index,
-                    token: this.tokenizer.decodeSingle(index),
+                    token: this.tokenizer.embed(index),
                     score,
                 };
-
             })
             .sort((a, b) => b.score - a.score)
         );
@@ -151,13 +164,16 @@ export class SimpleBookProcessor {
           .map((score, index) => [score, index])
           .sort((a, b) => b[0] - a[0])
           .slice(0, k)
-          .map(([_, i]) => i);
+          .map(([score, index]) => index);
         // console.log({ sortedIndices })
         return sortedIndices; // top-k token indices
     }
 
     normalizeVector(v: Vector) {
-        const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+        const norm = Math.sqrt(
+          v.reduce((acc, num) => acc + num * num, 0)
+        );
+        console.log({norm})
 
         return v.map(x => x / (norm || 1));
     }
