@@ -13,9 +13,11 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
       }
     );
 
+    model.train(10)
+
     try {
-        const response = model.generate('most other parts');
-        console.log(response);
+        // const response = model.generate('most other');
+        // console.log('response', response);
     } catch (e) {
         console.log(e);
     }

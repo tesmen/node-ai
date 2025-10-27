@@ -15,10 +15,10 @@ export class SimpleBookProcessor {
     constructor(cfg: ModelConfig) {
         this.cfg = cfg;
         this.fileService = new FileServiceAdapter();
-        this.tokenizer = new CharTokenizer(this.getCorpus(cfg.corpusFile));
+        this.tokenizer = new CharTokenizer(this.getCorpus());
         console.log('vocab size', this.tokenizer.vocabSize);
 
-        // Embeddings
+        // Token Embeddings
         if (cfg.wteFile) {
             this.wte = JSON.parse(this.fileService.readFileSync(cfg.wteFile).toString());
             console.log('WTE read from file');
@@ -27,6 +27,7 @@ export class SimpleBookProcessor {
             [this.wte].forEach(this.initMat);
         }
 
+        // Positional Embeddings
         if (cfg.wpeFile) {
             this.wpe = JSON.parse(this.fileService.readFileSync(cfg.wpeFile).toString());
             console.log('WPE read from file');
@@ -37,7 +38,13 @@ export class SimpleBookProcessor {
         console.log(cfg, { wpe: this.wpe.length, wte: this.wte.length });
     }
 
-    generate(prompt: string, maxNewTokens: number = 1) {
+    saveWeights(prefix: string) {
+        this.fileService.writeFileSync(`./weights/wpe-${prefix}.json`, JSON.stringify(this.wpe));
+        this.fileService.writeFileSync(`./weights/wte-${prefix}.json`, JSON.stringify(this.wte));
+    }
+
+
+    generate(prompt: string, maxNewTokens: number = 10) {
         const ids = this.tokenizer.encode(prompt);
         // console.log(ids);
 
@@ -46,7 +53,47 @@ export class SimpleBookProcessor {
             ids.push(logits.shift());
         }
 
-        return this.tokenizer.decode(ids);
+        return {
+            ids,
+            out: this.tokenizer.decode(ids)
+        };
+    }
+
+    trainIterations(iterations: number, windowSize: number) {
+        return this.train(windowSize);
+    }
+
+    train(windowSize: number) {
+        // windowSize = this.cfg.nCtx
+        const set: Set<string> = this.tokenizer.tokenize(this.getCorpus());
+        const arrayCopy: string[] = Array.from(set);
+        let sampleArray: string[];
+        let step = 0;
+
+        while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
+            console.log({ sampleArray });
+            step++;
+
+            for (let i = 1; i < sampleArray.length; i++) {
+                const prompt = sampleArray.slice(0, i).join(' ');
+                const ids = this.tokenizer.encode(prompt);
+                const logits = this.forward(ids);
+                const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
+                const logit = logits[0];
+
+                console.log('training on:', {
+                    prompt,
+                    expected: sampleArray[i],
+                    logit: logits[0],
+                    logitText: this.tokenizer.decodeOne(logit)
+                });
+
+                if (expectedTokenId !== logit) {
+                    // this.adjustEmbeddings()
+                }
+
+            }
+        }
     }
 
     buildPromptMatrix(inputIds: number[]) {
@@ -129,8 +176,8 @@ export class SimpleBookProcessor {
         }
     };
 
-    getCorpus(name: string): string {
-        const content = this.fileService.readFileSync(name);
+    getCorpus(): string {
+        const content = this.fileService.readFileSync(this.cfg.corpusFile);
         return content.toString();
     }
 
@@ -146,17 +193,18 @@ export class SimpleBookProcessor {
     findTopKCandidates(v: Vector, embeddings: Matrix, k = 5) {
         // console.log(`Looking for candidate`, v);
         const scores = embeddings.map(e => this.dot(v, e)); // dot product for each token
-        console.log(
-          scores
-            .map((score, index) => {
-                return {
-                    index,
-                    token: this.tokenizer.embed(index),
-                    score,
-                };
-            })
-            .sort((a, b) => b.score - a.score)
-        );
+        // console.log(
+        //   'report',
+        //   scores
+        //     .map((score, index) => {
+        //         return {
+        //             index,
+        //             token: this.tokenizer.embed(index),
+        //             score,
+        //         };
+        //     })
+        //     .sort((a, b) => b.score - a.score)
+        // );
 
 
         // get indices sorted by score (descending)
@@ -173,7 +221,7 @@ export class SimpleBookProcessor {
         const norm = Math.sqrt(
           v.reduce((acc, num) => acc + num * num, 0)
         );
-        console.log({norm})
+        // console.log({norm})
 
         return v.map(x => x / (norm || 1));
     }
@@ -200,5 +248,26 @@ export class SimpleBookProcessor {
             }
         }
         return out;
+    }
+
+    adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.1) {
+        const newPrompt = [];
+        const newTarget = [];
+
+        for (let i = 0; i < promptVec.length; i++) {
+            const delta = learningRate * (targetVec[i] - promptVec[i]);
+            newPrompt.push(promptVec[i] + delta);  // move prompt toward target
+            newTarget.push(targetVec[i] + delta);  // move target toward prompt
+        }
+
+        return { newPrompt, newTarget };
+    }
+
+    embed(id: number): Vector {
+        if (!this.wte[id]) {
+            throw new Error('Token out of range error');
+        }
+
+        return this.wte[id];
     }
 }

@@ -10,5 +10,4 @@ const model = new SimpleBookProcessor(
   }
 );
 
-model.fileService.writeFileSync('./weights/wpe.json', JSON.stringify(model.wpe));
-model.fileService.writeFileSync('./weights/wte.json', JSON.stringify(model.wte));
+model.saveWeights('init');
