@@ -77,6 +77,7 @@ export class SimpleBookProcessor {
             for (let i = 1; i < sampleArray.length; i++) {
                 const prompt = sampleArray.slice(0, i).join(' ');
                 const ids = this.tokenizer.encode(prompt);
+
                 const logits = this.forward(ids);
                 const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
                 const logit = logits[0];
@@ -89,7 +90,10 @@ export class SimpleBookProcessor {
                 });
 
                 if (expectedTokenId !== logit) {
-                    // this.adjustEmbeddings()
+                    const promptVector = this.createPromptVector(ids);
+                    const adjusted = this.adjustEmbeddings(promptVector, this.embed(expectedTokenId));
+                    console.log('adjusted.newTarget', adjusted.newTarget);
+                    console.log('adjusted.oldTarget', this.embed(expectedTokenId));
                 }
 
             }
@@ -112,8 +116,8 @@ export class SimpleBookProcessor {
         return promptMatrix;
     }
 
-    forward(inputIds: number[]) {
-        let promptMatrix = this.buildPromptMatrix(inputIds);
+    createPromptVector(promptIds: number[]): Vector {
+        let promptMatrix = this.buildPromptMatrix(promptIds);
         // console.log({ promptMatrix });
         const normalizedX = this.layerNormRowwise(promptMatrix, 1e-5);
         // console.log({ normalizedX })
@@ -122,7 +126,12 @@ export class SimpleBookProcessor {
         const normalizedResVector = this.normalizeVector(resultingVector);
         // console.log({ normalizedResVector });
 
-        const candidates = this.findTopKCandidates(normalizedResVector, this.wte);
+        return normalizedResVector;
+    }
+
+    forward(inputIds: number[]) {
+        const promptVector = this.createPromptVector(inputIds);
+        const candidates = this.findTopKCandidates(promptVector, this.wte);
         // console.log(candidates)
 
         return candidates;
@@ -250,7 +259,7 @@ export class SimpleBookProcessor {
         return out;
     }
 
-    adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.1) {
+    adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.05) {
         const newPrompt = [];
         const newTarget = [];
 
