@@ -83,6 +83,7 @@ export class SimpleBookProcessor {
         let correct = 0;
 
         while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
+            console.log(arrayCopy.length, (step + 1) * windowSize);
             step++;
 
             for (let i = 1; i < sampleArray.length; i++) {
