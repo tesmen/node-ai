@@ -59,16 +59,28 @@ export class SimpleBookProcessor {
     }
 
     trainIterations(iterations: number, windowSize: number) {
+        const stat = [];
+
         for (let i = 0; i < iterations; i++) {
-            this.train(windowSize);
+            const round = { error: 0, correct: 0, i };
+
+            const { error, correct } = this.train(windowSize);
+            round.correct += correct;
+            round.error += error;
+
+            stat.push(round);
         }
+
+        return stat
     }
 
-    train(windowSize: number) {
+    train(windowSize: number): { error: number, correct: number } {
         // windowSize = this.cfg.nCtx
         const arrayCopy: string[] = this.tokenizer.separate(this.getCorpus());
         let sampleArray: string[];
         let step = 0;
+        let error = 0;
+        let correct = 0;
 
         while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
             step++;
@@ -90,20 +102,25 @@ export class SimpleBookProcessor {
                     // this.wte[logit  ] = adjusted.newTarget;
                     // console.log('adjusted.', JSON.stringify(adjusted.newTarget));
                     // console.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
+                    error++;
+                } else {
+                    correct++;
                 }
 
-                console.log('training on:', {
-                    sampleArray: sampleArray.join(' '),
-                    prompt,
-                    expected: sampleArray[i],
-                    logitText: this.tokenizer.decodeOne(logit),
-                    logits: logits.slice(0, 10),
-                    logit: logits[0],
-                    correct: expectedTokenId === logit,
-                    distance
-                });
+                // console.log('training on:', {
+                //     sampleArray: sampleArray.join(' '),
+                //     prompt,
+                //     expected: sampleArray[i],
+                //     logitText: this.tokenizer.decodeOne(logit),
+                //     logits: logits.slice(0, 10),
+                //     logit: logits[0],
+                //     correct: expectedTokenId === logit,
+                //     distance
+                // });
             }
         }
+
+        return { error, correct };
     }
 
     euclideanDistance(a: Vector, b: Vector) {
