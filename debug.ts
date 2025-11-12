@@ -4,11 +4,13 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
 (async () => {
     const cfg: ModelConfig = {
-        corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
-        nEmbd: 256,
+        // corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
+        corpusFile: './books/candp.min.txt',
+        nEmbd: 128,
         nHidden: 128,
-        nCtx: 16,
-        iterations: 1
+        nCtx: 128,
+        iterations: 100,
+        trainWindow: 16
     };
 
     const model = new SimpleBookProcessor(cfg);
@@ -20,7 +22,8 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
     const stat = await model.trainIterations(cfg);
     model.saveWeights(batch + 'post');
     model.fileService.writeFileSync(`./weights/${batch}-stat.json`, JSON.stringify(stat));
-    model.generate('I saw her ')
+    const a = model.generate('actions had stirred')
+    console.log(a)
 
     await Runs.finishRun(cfg.id);
     process.exit();

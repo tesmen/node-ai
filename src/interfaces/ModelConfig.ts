@@ -9,4 +9,5 @@ export interface ModelConfig {
 
     iterations: number;
     id?: number;
+    trainWindow?: number;
 }
