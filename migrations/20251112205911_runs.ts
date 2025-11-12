@@ -1,0 +1,21 @@
+import type { Knex } from "knex";
+
+
+export async function up(knex: Knex): Promise<void> {
+    return knex.schema
+      .createTable('runs', function (table) {
+          table.increments('id');
+          table.timestamp('created_at').notNullable().defaultTo(knex.raw('NOW()'));
+          table.timestamp('finished_at');
+          table.string('source', 255).notNullable();
+          table.integer('nemb').notNullable();
+          table.integer('nctx').notNullable();
+          table.integer('iterations').notNullable();
+
+      });
+}
+
+
+export async function down(knex: Knex): Promise<void> {
+}
+

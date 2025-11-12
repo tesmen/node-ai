@@ -59,32 +59,30 @@ export class SimpleBookProcessor {
         };
     }
 
-    async trainIterations(iterations: number, windowSize: number) {
+    async trainIterations(config: ModelConfig) {
         const stat = [];
 
-        for (let i = 0; i < iterations; i++) {
+        for (let i = 0; i < config.iterations; i++) {
             const round = { error: 0, correct: 0, i };
 
-            const { error, correct } = this.train(windowSize);
+            const { error, correct } = this.train(config.nCtx);
             round.correct += correct;
             round.error += error;
 
 
             await db('results').insert(
               {
-                  source: './books/candp.min.txt',
+                  run_id: config.id,
                   error,
                   correct,
                   iteration: i,
-                  nemb: 64,
-                  nctx: 64,
               }
             );
 
             stat.push(round);
         }
 
-        return stat
+        return stat;
     }
 
     train(windowSize: number): { error: number, correct: number } {

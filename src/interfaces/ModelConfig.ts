@@ -6,4 +6,7 @@ export interface ModelConfig {
     corpusFile: string;
     wpeFile?: string;
     wteFile?: string;
+
+    iterations: number;
+    id?: number;
 }
