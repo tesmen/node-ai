@@ -44,7 +44,7 @@ export class SimpleBookProcessor {
         this.fileService.writeFileSync(`./weights/wte-${prefix}.json`, JSON.stringify(this.wte));
     }
 
-    generate(prompt: string, maxNewTokens: number = 10) {
+    generate(prompt: string, maxNewTokens: number = 20) {
         const ids = this.tokenizer.encode(prompt);
         // console.log(ids);
 

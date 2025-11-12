@@ -8,6 +8,8 @@ export async function up(knex: Knex): Promise<void> {
           table.timestamp('created_at').notNullable().defaultTo(knex.raw('NOW()'));
           table.timestamp('finished_at');
           table.string('source', 255).notNullable();
+          table.integer('corpus_length').notNullable();
+          table.integer('wte_length').notNullable();
           table.integer('nemb').notNullable();
           table.integer('nctx').notNullable();
           table.integer('iterations').notNullable();
