@@ -1,3 +1,4 @@
+import db from '../../db/knex';
 import { ModelConfig } from '../interfaces/ModelConfig';
 import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
@@ -58,7 +59,7 @@ export class SimpleBookProcessor {
         };
     }
 
-    trainIterations(iterations: number, windowSize: number) {
+    async trainIterations(iterations: number, windowSize: number) {
         const stat = [];
 
         for (let i = 0; i < iterations; i++) {
@@ -67,6 +68,18 @@ export class SimpleBookProcessor {
             const { error, correct } = this.train(windowSize);
             round.correct += correct;
             round.error += error;
+
+
+            await db('results').insert(
+              {
+                  source: './books/candp.min.txt',
+                  error,
+                  correct,
+                  iteration: i,
+                  nemb: 64,
+                  nctx: 64,
+              }
+            );
 
             stat.push(round);
         }
