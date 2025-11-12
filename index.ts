@@ -13,7 +13,8 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
       }
     );
 
-    model.train(10)
+    // model.train(10)
+    model.trainIterations(100, 10)
 
     try {
         // const response = model.generate('most other');
