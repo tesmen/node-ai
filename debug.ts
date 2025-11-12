@@ -3,9 +3,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 (async () => {
     const model = new SimpleBookProcessor(
       {
-          corpusFile: './books/candp.min.txt',
-          wpeFile: './weights/wpe.json',
-          wteFile: './weights/wte.json',
+          corpusFile: './books/candp.nano.txt',
           nEmbd: 16,
           nHidden: 128,
           nCtx: 64

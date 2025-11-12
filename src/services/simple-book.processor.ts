@@ -43,7 +43,6 @@ export class SimpleBookProcessor {
         this.fileService.writeFileSync(`./weights/wte-${prefix}.json`, JSON.stringify(this.wte));
     }
 
-
     generate(prompt: string, maxNewTokens: number = 10) {
         const ids = this.tokenizer.encode(prompt);
         // console.log(ids);
@@ -81,22 +80,24 @@ export class SimpleBookProcessor {
                 const logits = this.forward(ids);
                 const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
                 const logit = logits[0];
-                let distance = 0;
+                let distance = null;
 
                 if (expectedTokenId !== logit) {
                     const promptVector = this.createPromptVector(ids);
                     const adjusted = this.adjustEmbeddings(promptVector, this.embed(expectedTokenId));
                     distance = this.euclideanDistance(promptVector, adjusted.newTarget);
-                    this.wte[logit] = adjusted.newTarget;
+                    this.wte[expectedTokenId] = adjusted.newTarget;
+                    // this.wte[logit  ] = adjusted.newTarget;
                     // console.log('adjusted.', JSON.stringify(adjusted.newTarget));
                     // console.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
                 }
 
                 console.log('training on:', {
-                    sampleArray: sampleArray.join(', '),
+                    sampleArray: sampleArray.join(' '),
                     prompt,
                     expected: sampleArray[i],
                     logitText: this.tokenizer.decodeOne(logit),
+                    logits: logits.slice(0, 10),
                     logit: logits[0],
                     correct: expectedTokenId === logit,
                     distance
