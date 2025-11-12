@@ -60,18 +60,18 @@ export class SimpleBookProcessor {
     }
 
     trainIterations(iterations: number, windowSize: number) {
-        return this.train(windowSize);
+        for (let i = 0; i < iterations; i++) {
+            this.train(windowSize);
+        }
     }
 
     train(windowSize: number) {
         // windowSize = this.cfg.nCtx
-        const set: Set<string> = this.tokenizer.tokenize(this.getCorpus());
-        const arrayCopy: string[] = Array.from(set);
+        const arrayCopy: string[] = this.tokenizer.separate(this.getCorpus());
         let sampleArray: string[];
         let step = 0;
 
         while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
-            console.log({ sampleArray });
             step++;
 
             for (let i = 1; i < sampleArray.length; i++) {
@@ -81,23 +81,42 @@ export class SimpleBookProcessor {
                 const logits = this.forward(ids);
                 const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
                 const logit = logits[0];
-
-                console.log('training on:', {
-                    prompt,
-                    expected: sampleArray[i],
-                    logit: logits[0],
-                    logitText: this.tokenizer.decodeOne(logit)
-                });
+                let distance = 0;
 
                 if (expectedTokenId !== logit) {
                     const promptVector = this.createPromptVector(ids);
                     const adjusted = this.adjustEmbeddings(promptVector, this.embed(expectedTokenId));
-                    console.log('adjusted.newTarget', adjusted.newTarget);
-                    console.log('adjusted.oldTarget', this.embed(expectedTokenId));
+                    distance = this.euclideanDistance(promptVector, adjusted.newTarget);
+                    this.wte[logit] = adjusted.newTarget;
+                    // console.log('adjusted.', JSON.stringify(adjusted.newTarget));
+                    // console.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
                 }
 
+                console.log('training on:', {
+                    sampleArray: sampleArray.join(', '),
+                    prompt,
+                    expected: sampleArray[i],
+                    logitText: this.tokenizer.decodeOne(logit),
+                    logit: logits[0],
+                    correct: expectedTokenId === logit,
+                    distance
+                });
             }
         }
+    }
+
+    euclideanDistance(a: Vector, b: Vector) {
+        if (a.length !== b.length) {
+            throw new Error('Vectors must have the same length');
+        }
+
+        let sum = 0;
+        for (let i = 0; i < a.length; i++) {
+            const diff = a[i] - b[i];
+            sum += diff * diff;
+        }
+
+        return Math.sqrt(sum);
     }
 
     buildPromptMatrix(inputIds: number[]) {
@@ -129,7 +148,7 @@ export class SimpleBookProcessor {
         return normalizedResVector;
     }
 
-    forward(inputIds: number[]) {
+    forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
         const candidates = this.findTopKCandidates(promptVector, this.wte);
         // console.log(candidates)
@@ -187,6 +206,7 @@ export class SimpleBookProcessor {
 
     getCorpus(): string {
         const content = this.fileService.readFileSync(this.cfg.corpusFile);
+
         return content.toString();
     }
 
@@ -199,7 +219,7 @@ export class SimpleBookProcessor {
         return sum;
     }
 
-    findTopKCandidates(v: Vector, embeddings: Matrix, k = 5) {
+    findTopKCandidates(v: Vector, embeddings: Matrix, k = 5): number[] {
         // console.log(`Looking for candidate`, v);
         const scores = embeddings.map(e => this.dot(v, e)); // dot product for each token
         // console.log(

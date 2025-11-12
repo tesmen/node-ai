@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "test": "tsx index.ts",
+    "debug": "tsx debug.ts",
     "dev": "echo 1"
   },
   "author": "",

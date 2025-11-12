@@ -7,7 +7,6 @@ export class CharTokenizer {
 
     constructor(corpus: string) {
         const set = this.tokenize(corpus);
-
         this.itos = Array.from(set);
         // .sort();
         this.stoi = new Map(this.itos.map((char, index) => [char, index]));
@@ -15,12 +14,15 @@ export class CharTokenizer {
     }
 
     tokenize(corpus: string) {
-        return new Set(corpus
+        return new Set(this.separate(corpus));
+    }
+
+    separate(corpus: string) {
+        return corpus
           .split(/(\W)/)
           .map(line => line.trim())
           .filter(element => element.length > 0)
           .filter(element => !this.skip.has(element))
-        );
     }
 
     encode(input: string) {
