@@ -280,12 +280,16 @@ export class SimpleBookProcessor {
     }
 
     adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.05) {
+        if (promptVec.length !== targetVec.length) {
+            throw new Error('Vectors must have the same length');
+        }
+
         const newPrompt = [];
         const newTarget = [];
 
         for (let i = 0; i < promptVec.length; i++) {
-            const delta = learningRate * (targetVec[i] - promptVec[i]);
-            newPrompt.push(promptVec[i] + delta);  // move prompt toward target
+            const delta = learningRate * (promptVec[i] - targetVec[i]);
+            newPrompt.push(promptVec[i] - delta);  // move prompt toward target
             newTarget.push(targetVec[i] + delta);  // move target toward prompt
         }
 
