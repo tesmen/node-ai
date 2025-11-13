@@ -23,6 +23,7 @@ export class CharTokenizer {
           .map(line => line.trim())
           .filter(element => element.length > 0)
           .filter(element => !this.skip.has(element))
+          .filter(element => !/\W/g.test(element) ) // ! . ,
     }
 
     encode(input: string) {

@@ -10,7 +10,7 @@ export class SimpleBookProcessor {
     wte: Matrix = [];
     wpe: Matrix = [];
     fileService: FileServiceAdapter;
-    private tokenizer: CharTokenizer;
+    tokenizer: CharTokenizer;
     private cfg: ModelConfig;
 
     constructor(cfg: ModelConfig) {

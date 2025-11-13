@@ -13,6 +13,7 @@ export async function up(knex: Knex): Promise<void> {
           table.integer('nemb').notNullable();
           table.integer('nctx').notNullable();
           table.integer('iterations').notNullable();
+          table.float('correct_ratio').nullable();
 
       });
 }

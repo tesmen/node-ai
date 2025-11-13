@@ -22,9 +22,9 @@ export class Runs {
         return res.pop().id;
     }
 
-    static async finishRun(runId: number) {
+    static async finishRun(runId: number, data: Record<string, any>) {
         const res = await db('runs').update(
-          { finished_at: new Date }
+          Object.assign({ finished_at: new Date }, data)
         ).where({ id: runId });
     }
 }
