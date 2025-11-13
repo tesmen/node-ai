@@ -65,7 +65,7 @@ export class SimpleBookProcessor {
         for (let i = 0; i < config.iterations; i++) {
             const round = { error: 0, correct: 0, i };
 
-            const { error, correct } = this.train(config.trainWindow);
+            const { error, correct } = this.train(config.trainWindow || config.nCtx);
             round.correct += correct;
             round.error += error;
 

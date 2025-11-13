@@ -8,27 +8,34 @@ const useDbStorage = false;
     const cfg: ModelConfig = {
         // corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
         // corpusFile: './books/candp.nano.txt',
-        corpusFile: './books/candp.min.txt',
-        // corpusFile: './books/candp.txt',
+        // corpusFile: './books/candp.min.txt',
+        corpusFile: './books/candp.txt',
         nEmbd: 64,
         nHidden: 128,
         nCtx: 64,
-        iterations: 400,
-        trainWindow: 10
+        iterations: 100,
+        trainWindow: 64
     };
 
     const model = new SimpleBookProcessor(cfg);
-// console.log(model.tokenizer.stoi)
-//     process.exit()
-    const batch = Math.round((new Date).getTime() / 1000);
-    cfg.id = await Runs.createRun(cfg.corpusFile, cfg.nEmbd, cfg.nCtx, cfg.iterations, model.getCorpus().length, model.wte.length);
 
-    // model.saveWeights(batch + 'pre');
+    cfg.id = await Runs.createRun2(
+      {
+          source: cfg.corpusFile,
+          nemb: cfg.nEmbd,
+          nctx: cfg.nCtx,
+          iterations: cfg.iterations,
+          corpus_length: model.getCorpus().length,
+          wte_length: model.wte.length,
+          window_size: cfg.trainWindow,
+      }
+    );
+
+
     const stat = await model.trainIterations(cfg);
-    // model.saveWeights(batch + 'post');
-    model.fileService.writeFileSync(`./weights/${batch}-stat.json`, JSON.stringify(stat));
-    const a = model.generate('actions had stirred');
-    console.log(a);
+
+    // const a = model.generate('actions had stirred');
+    // console.log(a);
     const lastStat = stat.pop();
     const ratio = lastStat.correct / (lastStat.error + lastStat.correct);
     await Runs.finishRun(cfg.id, { correct_ratio: ratio });
