@@ -1,3 +1,24 @@
 services:
-  app:
-    image: node:22
+  postgres-local:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "6432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pg_local:/var/lib/postgresql/data
+    logging:
+      options:
+        max-file: "3"
+        max-size: "1m"
+#    networks:
+#      default:
+#      local:
+#        aliases:
+#          - postgres
+
+volumes:
+  rabbit_local:
+  pg_local:

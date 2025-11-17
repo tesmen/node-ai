@@ -8,7 +8,7 @@ const config: { [key: string]: Knex.Config } = {
         connection: {
             database: 'postgres',
             host: 'localhost',
-            port: 5432,
+            port: 6432,
             user: 'postgres',
             password: 'password'
         },

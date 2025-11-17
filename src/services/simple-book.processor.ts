@@ -17,26 +17,15 @@ export class SimpleBookProcessor {
         this.cfg = cfg;
         this.fileService = new FileServiceAdapter();
         this.tokenizer = new CharTokenizer(this.getCorpus());
-        console.log('vocab size', this.tokenizer.vocabSize);
+        this.setupWte();
+        this.setupWpe();
 
-        // Token Embeddings
-        if (cfg.wteFile) {
-            this.wte = JSON.parse(this.fileService.readFileSync(cfg.wteFile).toString());
-            console.log('WTE read from file');
-        } else {
-            this.wte = this.zeros(this.tokenizer.vocabSize, cfg.nEmbd); // token embeddings
-            [this.wte].forEach(this.initMat);
-        }
-
-        // Positional Embeddings
-        if (cfg.wpeFile) {
-            this.wpe = JSON.parse(this.fileService.readFileSync(cfg.wpeFile).toString());
-            console.log('WPE read from file');
-        } else {
-            this.wpe = this.zeros(cfg.nCtx, cfg.nEmbd);      // positional embeddings
-            [this.wpe].forEach(this.initMat);
-        }
-        console.log(cfg, { wpe: this.wpe.length, wte: this.wte.length });
+        this.log(cfg, {
+              wpeLength: this.wpe.length,
+              wteLength: this.wte.length,
+              vocabSize: this.tokenizer.vocabSize
+          }
+        );
     }
 
     saveWeights(prefix: string) {
@@ -44,9 +33,31 @@ export class SimpleBookProcessor {
         this.fileService.writeFileSync(`./weights/wte-${prefix}.json`, JSON.stringify(this.wte));
     }
 
+    setupWte() {
+        // Token Embeddings
+        if (this.cfg.wteFile) {
+            this.wte = JSON.parse(this.fileService.readFileSync(this.cfg.wteFile).toString());
+            this.log('WTE read from file');
+        } else {
+            this.wte = this.zeros(this.tokenizer.vocabSize, this.cfg.nEmbd); // token embeddings
+            [this.wte].forEach(this.initMat);
+        }
+    }
+
+    setupWpe() {
+        // Positional Embeddings
+        if (this.cfg.wpeFile) {
+            this.wpe = JSON.parse(this.fileService.readFileSync(this.cfg.wpeFile).toString());
+            this.log('WPE read from file');
+        } else {
+            this.wpe = this.zeros(this.cfg.nCtx, this.cfg.nEmbd);      // positional embeddings
+            [this.wpe].forEach(this.initMat);
+        }
+    }
+
     generate(prompt: string, maxNewTokens: number = 20) {
         const ids = this.tokenizer.encode(prompt);
-        // console.log(ids);
+        // this.log(ids);
 
         for (let step = 0; step < maxNewTokens; step++) {
             const logits = this.forward(ids);
@@ -94,7 +105,7 @@ export class SimpleBookProcessor {
         let correct = 0;
 
         while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
-            console.log(arrayCopy.length, (step + 1) * windowSize);
+            this.log(arrayCopy.length, (step + 1) * windowSize);
             step++;
 
             for (let i = 1; i < sampleArray.length; i++) {
@@ -112,14 +123,14 @@ export class SimpleBookProcessor {
                     distance = this.euclideanDistance(promptVector, adjusted.newTarget);
                     this.wte[expectedTokenId] = adjusted.newTarget;
                     // this.wte[logit  ] = adjusted.newTarget;
-                    // console.log('adjusted.', JSON.stringify(adjusted.newTarget));
-                    // console.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
+                    // this.log('adjusted.', JSON.stringify(adjusted.newTarget));
+                    // this.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
                     error++;
                 } else {
                     correct++;
                 }
 
-                // console.log('training on:', {
+                // this.log('training on:', {
                 //     sampleArray: sampleArray.join(' '),
                 //     prompt,
                 //     expected: sampleArray[i],
@@ -151,7 +162,7 @@ export class SimpleBookProcessor {
 
     buildPromptMatrix(inputIds: number[]) {
         let promptMatrix = this.zeros(inputIds.length, this.cfg.nEmbd);
-        // console.log({ promptMatrix });
+        // this.log({ promptMatrix });
 
         for (let inputsArrIndex = 0; inputsArrIndex < inputIds.length; inputsArrIndex++) {
             const token = this.wte[inputIds[inputsArrIndex]];
@@ -167,13 +178,13 @@ export class SimpleBookProcessor {
 
     createPromptVector(promptIds: number[]): Vector {
         let promptMatrix = this.buildPromptMatrix(promptIds);
-        // console.log({ promptMatrix });
+        // this.log({ promptMatrix });
         const normalizedX = this.layerNormRowwise(promptMatrix, 1e-5);
-        // console.log({ normalizedX })
+        // this.log({ normalizedX })
         const resultingVector = this.reduceM2Vector(normalizedX);
-        // console.log({ resultingVector })
+        // this.log({ resultingVector })
         const normalizedResVector = this.normalizeVector(resultingVector);
-        // console.log({ normalizedResVector });
+        // this.log({ normalizedResVector });
 
         return normalizedResVector;
     }
@@ -181,7 +192,7 @@ export class SimpleBookProcessor {
     forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
         const candidates = this.findTopKCandidates(promptVector, this.wte);
-        // console.log(candidates)
+        // this.log(candidates)
 
         return candidates;
     }
@@ -196,7 +207,7 @@ export class SimpleBookProcessor {
             }
         }
 
-        // console.log({ res })
+        // this.log({ res })
         return res;
     }
 
@@ -250,9 +261,9 @@ export class SimpleBookProcessor {
     }
 
     findTopKCandidates(v: Vector, embeddings: Matrix, k = 5): number[] {
-        // console.log(`Looking for candidate`, v);
+        // this.log(`Looking for candidate`, v);
         const scores = embeddings.map(e => this.dot(v, e)); // dot product for each token
-        // console.log(
+        // this.log(
         //   'report',
         //   scores
         //     .map((score, index) => {
@@ -272,7 +283,7 @@ export class SimpleBookProcessor {
           .sort((a, b) => b[0] - a[0])
           .slice(0, k)
           .map(([score, index]) => index);
-        // console.log({ sortedIndices })
+        // this.log({ sortedIndices })
         return sortedIndices; // top-k token indices
     }
 
@@ -280,7 +291,7 @@ export class SimpleBookProcessor {
         const norm = Math.sqrt(
           v.reduce((acc, num) => acc + num * num, 0)
         );
-        // console.log({norm})
+        // this.log({norm})
 
         return v.map(x => x / (norm || 1));
     }
@@ -332,5 +343,9 @@ export class SimpleBookProcessor {
         }
 
         return this.wte[id];
+    }
+
+    private log(...msg: any) {
+        console.log(msg);
     }
 }

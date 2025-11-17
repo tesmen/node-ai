@@ -7,7 +7,7 @@ export interface ModelConfig {
     wpeFile?: string;
     wteFile?: string;
 
-    iterations: number;
+    iterations?: number;
     id?: number;
     trainWindow?: number;
 }
