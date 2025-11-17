@@ -8,12 +8,13 @@ const useDbStorage = false;
     const cfg: ModelConfig = {
         // corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
         // corpusFile: './books/candp.nano.txt',
+        corpusFile: './books/candp.med.txt',
         // corpusFile: './books/candp.min.txt',
-        corpusFile: './books/candp.txt',
+        // corpusFile: './books/candp.txt',
         nEmbd: 64,
         nHidden: 128,
         nCtx: 64,
-        iterations: 100,
+        iterations: 10,
         trainWindow: 64
     };
 
@@ -30,7 +31,6 @@ const useDbStorage = false;
           window_size: cfg.trainWindow,
       }
     );
-
 
     const stat = await model.trainIterations(cfg);
 

@@ -73,10 +73,10 @@ export class SimpleBookProcessor {
     async trainIterations(config: ModelConfig) {
         const stat = [];
 
-        for (let i = 0; i < config.iterations; i++) {
-            const round = { error: 0, correct: 0, i };
-
-            const { error, correct } = this.train(config.trainWindow || config.nCtx);
+        for (let iteration = 0; iteration < config.iterations; iteration++) {
+            const windowSize = config.trainWindow || config.nCtx;
+            const round = { error: 0, correct: 0, i: iteration };
+            const { error, correct } = this.train(windowSize, iteration);
             round.correct += correct;
             round.error += error;
 
@@ -86,7 +86,7 @@ export class SimpleBookProcessor {
                   run_id: config.id,
                   error,
                   correct,
-                  iteration: i,
+                  iteration: iteration,
               }
             );
 
@@ -96,16 +96,23 @@ export class SimpleBookProcessor {
         return stat;
     }
 
-    train(windowSize: number): { error: number, correct: number } {
-        // windowSize = this.cfg.nCtx
-        const arrayCopy: string[] = this.tokenizer.separate(this.getCorpus());
+    // a single run over provided corpus file
+    train(windowSize: number, iteration: number): { error: number, correct: number } {
+        const corpusArray: string[] = this.tokenizer.separate(this.getCorpus());
         let sampleArray: string[];
         let step = 0;
         let error = 0;
         let correct = 0;
 
-        while ((sampleArray = arrayCopy.slice(step * windowSize, (step + 1) * windowSize)).length) {
-            this.log(arrayCopy.length, (step + 1) * windowSize);
+        const shift = corpusArray.length < windowSize
+          ? iteration % corpusArray.length
+          : iteration % windowSize;
+
+        // if (corpusArray.length > shift) {
+        //     corpusArray.splice(0, shift); // strip shift
+        // }
+
+        while ((sampleArray = corpusArray.slice(shift + step * windowSize, (step + 1) * windowSize)).length) {
             step++;
 
             for (let i = 1; i < sampleArray.length; i++) {
@@ -115,12 +122,10 @@ export class SimpleBookProcessor {
                 const logits = this.forward(ids);
                 const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
                 const logit = logits[0];
-                let distance = null;
 
                 if (expectedTokenId !== logit) {
                     const promptVector = this.createPromptVector(ids);
                     const adjusted = this.adjustEmbeddings(promptVector, this.embed(expectedTokenId));
-                    distance = this.euclideanDistance(promptVector, adjusted.newTarget);
                     this.wte[expectedTokenId] = adjusted.newTarget;
                     // this.wte[logit  ] = adjusted.newTarget;
                     // this.log('adjusted.', JSON.stringify(adjusted.newTarget));
@@ -130,23 +135,25 @@ export class SimpleBookProcessor {
                     correct++;
                 }
 
-                // this.log('training on:', {
-                //     sampleArray: sampleArray.join(' '),
-                //     prompt,
-                //     expected: sampleArray[i],
-                //     logitText: this.tokenizer.decodeOne(logit),
-                //     logits: logits.slice(0, 10),
-                //     logit: logits[0],
-                //     correct: expectedTokenId === logit,
-                //     distance
-                // });
+                // this.log('training on:',
+                // {
+                // sampleArray: sampleArray.join(' '),
+                // shift,
+                // prompt,
+                // expected: sampleArray[i],
+                // logitText: this.tokenizer.decodeOne(logit),
+                // logits: logits.slice(0, 10),
+                // logit: logits[0],
+                // correct: expectedTokenId === logit,
+                // }
+                // );
             }
         }
 
         return { error, correct };
     }
 
-    euclideanDistance(a: Vector, b: Vector) {
+    private euclideanDistance(a: Vector, b: Vector) {
         if (a.length !== b.length) {
             throw new Error('Vectors must have the same length');
         }
@@ -160,7 +167,7 @@ export class SimpleBookProcessor {
         return Math.sqrt(sum);
     }
 
-    buildPromptMatrix(inputIds: number[]) {
+    private buildPromptMatrix(inputIds: number[]) {
         let promptMatrix = this.zeros(inputIds.length, this.cfg.nEmbd);
         // this.log({ promptMatrix });
 
@@ -176,7 +183,7 @@ export class SimpleBookProcessor {
         return promptMatrix;
     }
 
-    createPromptVector(promptIds: number[]): Vector {
+    private createPromptVector(promptIds: number[]): Vector {
         let promptMatrix = this.buildPromptMatrix(promptIds);
         // this.log({ promptMatrix });
         const normalizedX = this.layerNormRowwise(promptMatrix, 1e-5);
@@ -189,7 +196,7 @@ export class SimpleBookProcessor {
         return normalizedResVector;
     }
 
-    forward(inputIds: number[]): number[] {
+    private forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
         const candidates = this.findTopKCandidates(promptVector, this.wte);
         // this.log(candidates)
@@ -197,7 +204,7 @@ export class SimpleBookProcessor {
         return candidates;
     }
 
-    reduceM2Vector(M: Matrix): Vector {
+    private reduceM2Vector(M: Matrix): Vector {
         const vectorLength = M[0].length;
         const res: Vector = (new Array(vectorLength)).fill(0);
 
@@ -211,7 +218,7 @@ export class SimpleBookProcessor {
         return res;
     }
 
-    zeros(rows: number, cols: number): Matrix {
+    private zeros(rows: number, cols: number): Matrix {
         const array = new Array(rows);
 
         for (let i = 0; i < rows; i++) {
@@ -221,7 +228,7 @@ export class SimpleBookProcessor {
         return array;
     }
 
-    initMat(M: Matrix): void {
+    private initMat(M: Matrix): void {
         const magnitude: number = 0.2;
         for (let i = 0; i < M.length; i++) {
 
@@ -231,7 +238,7 @@ export class SimpleBookProcessor {
         }
     };
 
-    initNormalizedMat(M: Matrix = []): void {
+    private initNormalizedMat(M: Matrix = []): void {
         const matrixSize = M[0].length;
 
         for (let i = 0; i < M.length; i++) {
@@ -251,7 +258,7 @@ export class SimpleBookProcessor {
         return content.toString();
     }
 
-    dot(a: Vector, b: Vector) {
+    private dot(a: Vector, b: Vector) {
         let sum = 0;
         for (let i = 0; i < a.length; i++) {
             sum += a[i] * b[i];
