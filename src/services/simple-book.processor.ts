@@ -1,4 +1,3 @@
-import db from '../../db/knex';
 import { Result } from '../database/result';
 import { Runs } from '../database/runs';
 import { ModelConfig } from '../interfaces/ModelConfig';
@@ -7,6 +6,24 @@ import { CharTokenizer } from './char.tokenizer';
 
 type Vector = number[];
 type Matrix = Vector[];
+
+
+export class SmartVector extends Array {
+    constructor(...items: any[]) {
+        super(...items);
+    }
+
+    add(v: Vector) {
+        if (this.length != v.length) {
+            throw Error('this.length != v.length');
+        }
+
+        this.forEach((el, i) => this[i] += v[i]);
+
+        return this;
+    }
+}
+
 
 export class SimpleBookProcessor {
     wte: Matrix = [];

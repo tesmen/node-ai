@@ -5,17 +5,16 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 (async () => {
     const cfg: ModelConfig = {
         // corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
-        corpusFile: './books/candp.nano.txt',
-        // corpusFile: './books/candp.med.txt',
+        // corpusFile: './books/candp.nano.txt',
+        corpusFile: './books/candp.med.txt',
         // corpusFile: './books/candp.min.txt',
         // corpusFile: './books/candp.txt',
         nEmbd: 64,
         nHidden: 128,
         nCtx: 64,
-        iterations: 500,
-        trainWindow: 64,
-        // useSlide: false,
-        useSlide: true,
+        iterations: 200,
+        useSlide: false,
+        // useSlide: true,
     };
 
     const model = new SimpleBookProcessor(cfg);
@@ -35,7 +34,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
     await model.trainIterations(cfg);
 
-    // const a = model.generate('actions had stirred');
+    // const a = model.generate('A few words', 20);
     // console.log(a);
     process.exit();
 
