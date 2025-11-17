@@ -49,4 +49,5 @@ interface RunInterface {
     corpus_length?: number;
     correct_ratio?: number;
     window_size?: number;
+    use_slide?: boolean;
 }

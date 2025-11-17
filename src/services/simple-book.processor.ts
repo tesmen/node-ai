@@ -1,4 +1,6 @@
 import db from '../../db/knex';
+import { Result } from '../database/result';
+import { Runs } from '../database/runs';
 import { ModelConfig } from '../interfaces/ModelConfig';
 import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
@@ -70,49 +72,47 @@ export class SimpleBookProcessor {
         };
     }
 
-    async trainIterations(config: ModelConfig) {
-        const stat = [];
+    async trainIterations(config: ModelConfig): Promise<void> {
+        let round = { error: 0, correct: 0, ratio: 0 };
 
         for (let iteration = 0; iteration < config.iterations; iteration++) {
             const windowSize = config.trainWindow || config.nCtx;
-            const round = { error: 0, correct: 0, i: iteration };
-            const { error, correct } = this.train(windowSize, iteration);
-            round.correct += correct;
-            round.error += error;
+            const { error, correct, shift } = this.train(windowSize, iteration);
+            round.correct = correct;
+            round.error = error;
+            round.ratio = Number((round.correct / (round.error + round.correct)).toFixed(3)) || 0;
+            this.log('>>> Iteration finished ', { iteration, round });
 
-
-            await db('results').insert(
-              {
+            await Result.create({
                   run_id: config.id,
                   error,
                   correct,
                   iteration: iteration,
               }
             );
-
-            stat.push(round);
         }
 
-        return stat;
+        await Runs.finishRun(this.cfg.id, { correct_ratio: round.ratio });
     }
 
     // a single run over provided corpus file
-    train(windowSize: number, iteration: number): { error: number, correct: number } {
+    train(windowSize: number, iteration: number): { error: number; correct: number; shift: number } {
         const corpusArray: string[] = this.tokenizer.separate(this.getCorpus());
         let sampleArray: string[];
         let step = 0;
         let error = 0;
         let correct = 0;
+        let shift;
 
-        const shift = corpusArray.length < windowSize
-          ? iteration % corpusArray.length
-          : iteration % windowSize;
+        if (this.cfg.useSlide) {
+            shift = corpusArray.length < windowSize
+              ? iteration % corpusArray.length
+              : iteration % windowSize;
+        } else {
+            shift = 0;
+        }
 
-        // if (corpusArray.length > shift) {
-        //     corpusArray.splice(0, shift); // strip shift
-        // }
-
-        while ((sampleArray = corpusArray.slice(shift + step * windowSize, (step + 1) * windowSize)).length) {
+        while ((sampleArray = corpusArray.slice(shift + step * windowSize, shift + (step + 1) * windowSize)).length) {
             step++;
 
             for (let i = 1; i < sampleArray.length; i++) {
@@ -136,21 +136,21 @@ export class SimpleBookProcessor {
                 }
 
                 // this.log('training on:',
-                // {
-                // sampleArray: sampleArray.join(' '),
-                // shift,
-                // prompt,
-                // expected: sampleArray[i],
-                // logitText: this.tokenizer.decodeOne(logit),
-                // logits: logits.slice(0, 10),
-                // logit: logits[0],
-                // correct: expectedTokenId === logit,
-                // }
+                //   {
+                //       sampleArray: sampleArray.join(' '),
+                //       shift,
+                //       prompt,
+                //       expected: sampleArray[i],
+                //       logitText: this.tokenizer.decodeOne(logit),
+                //       logits: logits.slice(0, 10),
+                //       logit: logits[0],
+                //       correct: expectedTokenId === logit,
+                //   }
                 // );
             }
         }
 
-        return { error, correct };
+        return { error, correct, shift };
     }
 
     private euclideanDistance(a: Vector, b: Vector) {

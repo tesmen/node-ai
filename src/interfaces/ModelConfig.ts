@@ -9,5 +9,6 @@ export interface ModelConfig {
 
     iterations?: number;
     id?: number;
+    useSlide?: boolean;
     trainWindow?: number;
 }

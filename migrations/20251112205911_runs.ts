@@ -1,4 +1,4 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex';
 
 
 export async function up(knex: Knex): Promise<void> {
@@ -15,6 +15,7 @@ export async function up(knex: Knex): Promise<void> {
           table.integer('iterations').notNullable();
           table.integer('window_size').notNullable();
           table.float('correct_ratio').nullable();
+          table.boolean('use_slide').nullable().defaultTo(false);
 
       });
 }
