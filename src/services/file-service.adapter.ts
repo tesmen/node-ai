@@ -12,4 +12,14 @@ export class FileServiceAdapter {
     writeFileSync(file: string, data: string) {
         return fs.writeFileSync(file, data);
     }
+
+    static readFileSync(file: string): Buffer {
+        return fs.readFileSync(file);
+    }
+
+    static getTextContent(file: string): string {
+        const content = FileServiceAdapter.readFileSync(file);
+
+        return content.toString();
+    }
 }

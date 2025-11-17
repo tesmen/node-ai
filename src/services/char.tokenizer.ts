@@ -5,7 +5,11 @@ export class CharTokenizer {
     stoi: Map<string, number> = new Map;
     vocabSize: number;
 
-    constructor(corpus: string) {
+    constructor() {
+
+    }
+
+    init(corpus:string) {
         const set = this.tokenize(corpus);
         this.itos = Array.from(set);
         // .sort();
@@ -23,7 +27,7 @@ export class CharTokenizer {
           .map(line => line.trim())
           .filter(element => element.length > 0)
           .filter(element => !this.skip.has(element))
-          .filter(element => !/\W/g.test(element) ) // ! . ,
+          .filter(element => !/\W/g.test(element)); // ! . ,
     }
 
     encode(input: string) {

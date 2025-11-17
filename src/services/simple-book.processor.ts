@@ -1,29 +1,18 @@
 import { Result } from '../database/result';
 import { Runs } from '../database/runs';
+import {
+    adjustEmbeddings,
+    dotProduct,
+    initMat,
+    layerNormRowwise,
+    normalizeVector,
+    reduceM2Vector,
+    zeros
+} from '../fns';
 import { ModelConfig } from '../interfaces/ModelConfig';
+import { Matrix, Vector } from '../types';
 import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
-
-type Vector = number[];
-type Matrix = Vector[];
-
-
-export class SmartVector extends Array {
-    constructor(...items: any[]) {
-        super(...items);
-    }
-
-    add(v: Vector) {
-        if (this.length != v.length) {
-            throw Error('this.length != v.length');
-        }
-
-        this.forEach((el, i) => this[i] += v[i]);
-
-        return this;
-    }
-}
-
 
 export class SimpleBookProcessor {
     wte: Matrix = [];
@@ -35,7 +24,8 @@ export class SimpleBookProcessor {
     constructor(cfg: ModelConfig) {
         this.cfg = cfg;
         this.fileService = new FileServiceAdapter();
-        this.tokenizer = new CharTokenizer(this.getCorpus());
+        this.tokenizer = new CharTokenizer();
+        this.tokenizer.init(FileServiceAdapter.getTextContent(this.cfg.corpusFile));
         this.setupWte();
         this.setupWpe();
 
@@ -58,8 +48,8 @@ export class SimpleBookProcessor {
             this.wte = JSON.parse(this.fileService.readFileSync(this.cfg.wteFile).toString());
             this.log('WTE read from file');
         } else {
-            this.wte = this.zeros(this.tokenizer.vocabSize, this.cfg.nEmbd); // token embeddings
-            [this.wte].forEach(this.initMat);
+            this.wte = zeros(this.tokenizer.vocabSize, this.cfg.nEmbd); // token embeddings
+            [this.wte].forEach(initMat);
         }
     }
 
@@ -69,8 +59,8 @@ export class SimpleBookProcessor {
             this.wpe = JSON.parse(this.fileService.readFileSync(this.cfg.wpeFile).toString());
             this.log('WPE read from file');
         } else {
-            this.wpe = this.zeros(this.cfg.nCtx, this.cfg.nEmbd);      // positional embeddings
-            [this.wpe].forEach(this.initMat);
+            this.wpe = zeros(this.cfg.nCtx, this.cfg.nEmbd);      // positional embeddings
+            [this.wpe].forEach(initMat);
         }
     }
 
@@ -142,7 +132,7 @@ export class SimpleBookProcessor {
 
                 if (expectedTokenId !== logit) {
                     const promptVector = this.createPromptVector(ids);
-                    const adjusted = this.adjustEmbeddings(promptVector, this.embed(expectedTokenId));
+                    const adjusted = adjustEmbeddings(promptVector, this.embed(expectedTokenId));
                     this.wte[expectedTokenId] = adjusted.newTarget;
                     // this.wte[logit  ] = adjusted.newTarget;
                     // this.log('adjusted.', JSON.stringify(adjusted.newTarget));
@@ -170,22 +160,8 @@ export class SimpleBookProcessor {
         return { error, correct, shift };
     }
 
-    private euclideanDistance(a: Vector, b: Vector) {
-        if (a.length !== b.length) {
-            throw new Error('Vectors must have the same length');
-        }
-
-        let sum = 0;
-        for (let i = 0; i < a.length; i++) {
-            const diff = a[i] - b[i];
-            sum += diff * diff;
-        }
-
-        return Math.sqrt(sum);
-    }
-
     private buildPromptMatrix(inputIds: number[]) {
-        let promptMatrix = this.zeros(inputIds.length, this.cfg.nEmbd);
+        let promptMatrix = zeros(inputIds.length, this.cfg.nEmbd);
         // this.log({ promptMatrix });
 
         for (let inputsArrIndex = 0; inputsArrIndex < inputIds.length; inputsArrIndex++) {
@@ -202,72 +178,17 @@ export class SimpleBookProcessor {
 
     private createPromptVector(promptIds: number[]): Vector {
         let promptMatrix = this.buildPromptMatrix(promptIds);
-        // this.log({ promptMatrix });
-        const normalizedX = this.layerNormRowwise(promptMatrix, 1e-5);
-        // this.log({ normalizedX })
-        const resultingVector = this.reduceM2Vector(normalizedX);
-        // this.log({ resultingVector })
-        const normalizedResVector = this.normalizeVector(resultingVector);
-        // this.log({ normalizedResVector });
+        const normalizedX = layerNormRowwise(promptMatrix, 1e-5);
+        const resultingVector = reduceM2Vector(normalizedX);
+        const normalizedResVector = normalizeVector(resultingVector);
 
         return normalizedResVector;
     }
 
     private forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
-        const candidates = this.findTopKCandidates(promptVector, this.wte);
-        // this.log(candidates)
-
-        return candidates;
+        return this.findTopKCandidates(promptVector, this.wte);
     }
-
-    private reduceM2Vector(M: Matrix): Vector {
-        const vectorLength = M[0].length;
-        const res: Vector = (new Array(vectorLength)).fill(0);
-
-        for (let i = 0; i < M.length; i++) {
-            for (let j = 0; j < vectorLength; j++) {
-                res[j] += M[i][j];
-            }
-        }
-
-        // this.log({ res })
-        return res;
-    }
-
-    private zeros(rows: number, cols: number): Matrix {
-        const array = new Array(rows);
-
-        for (let i = 0; i < rows; i++) {
-            array[i] = new Array(cols);
-        }
-
-        return array;
-    }
-
-    private initMat(M: Matrix): void {
-        const magnitude: number = 0.2;
-        for (let i = 0; i < M.length; i++) {
-
-            for (let j = 0; j < M[i].length; j++) {
-                M[i][j] = magnitude / 2 - Math.random() * magnitude;
-            }
-        }
-    };
-
-    private initNormalizedMat(M: Matrix = []): void {
-        const matrixSize = M[0].length;
-
-        for (let i = 0; i < M.length; i++) {
-            const vector: Vector = [];
-
-            for (let j = 0; j < matrixSize; j++) {
-                vector.push(1 - 2 * Math.random());
-            }
-
-            M[i] = this.normalizeVector(vector);
-        }
-    };
 
     getCorpus(): string {
         const content = this.fileService.readFileSync(this.cfg.corpusFile);
@@ -275,18 +196,9 @@ export class SimpleBookProcessor {
         return content.toString();
     }
 
-    private dot(a: Vector, b: Vector) {
-        let sum = 0;
-        for (let i = 0; i < a.length; i++) {
-            sum += a[i] * b[i];
-        }
-
-        return sum;
-    }
-
     findTopKCandidates(v: Vector, embeddings: Matrix, k = 5): number[] {
         // this.log(`Looking for candidate`, v);
-        const scores = embeddings.map(e => this.dot(v, e)); // dot product for each token
+        const scores = embeddings.map(e => dotProduct(v, e)); // dot product for each token
         // this.log(
         //   'report',
         //   scores
@@ -311,56 +223,6 @@ export class SimpleBookProcessor {
         return sortedIndices; // top-k token indices
     }
 
-    normalizeVector(v: Vector) {
-        const norm = Math.sqrt(
-          v.reduce((acc, num) => acc + num * num, 0)
-        );
-        // this.log({norm})
-
-        return v.map(x => x / (norm || 1));
-    }
-
-    layerNormRowwise(X: Matrix, eps = 1e-5, gamma: Vector = null, beta: Vector = null) {
-        const m = X.length, n = X[0].length;
-        const out = this.zeros(m, n);
-
-        for (let i = 0; i < m; i++) {
-            let mean = 0;
-            for (let j = 0; j < n; j++) mean += X[i][j];
-            mean /= n;
-            let varSum = 0;
-            for (let j = 0; j < n; j++) {
-                const d = X[i][j] - mean;
-                varSum += d * d;
-            }
-            const invStd = 1 / Math.sqrt(varSum / n + eps);
-            for (let j = 0; j < n; j++) {
-                let v = (X[i][j] - mean) * invStd;
-                if (gamma) v *= gamma[j];
-                if (beta) v += beta[j];
-                out[i][j] = v;
-            }
-        }
-        return out;
-    }
-
-    adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.05) {
-        if (promptVec.length !== targetVec.length) {
-            throw new Error('Vectors must have the same length');
-        }
-
-        const newPrompt = [];
-        const newTarget = [];
-
-        for (let i = 0; i < promptVec.length; i++) {
-            const delta = learningRate * (promptVec[i] - targetVec[i]);
-            newPrompt.push(promptVec[i] - delta);  // move prompt toward target
-            newTarget.push(targetVec[i] + delta);  // move target toward prompt
-        }
-
-        return { newPrompt, newTarget };
-    }
-
     embed(id: number): Vector {
         if (!this.wte[id]) {
             throw new Error('Token out of range error');
@@ -373,3 +235,4 @@ export class SimpleBookProcessor {
         console.log(msg);
     }
 }
+

@@ -4,4 +4,5 @@ export class TrainingSessionConfig {
     corpusStripped: string[];
     iterations: number;
     useSlide: false;
+    id: number;
 }
