@@ -30,7 +30,9 @@ export class SimpleBookProcessor {
         this.setupWte();
         this.setupWpe();
 
-        this.log(cfg, {
+        this.log(
+          // cfg,
+          {
               wpeLength: this.wpe.length,
               wteLength: this.wte.length,
               vocabSize: this.tokenizer.vocabSize
@@ -45,9 +47,9 @@ export class SimpleBookProcessor {
 
     setupWte() {
         // Token Embeddings
-        if (this.cfg.wteFile) {
-            this.wte = JSON.parse(this.fileService.readFileSync(this.cfg.wteFile).toString());
-            this.log('WTE read from file');
+        if (this.cfg.wte) {
+            this.wte = this.cfg.wte;
+            this.log('WTE read from cfg');
         } else {
             this.wte = zeros(this.tokenizer.vocabSize, this.cfg.nEmbd); // token embeddings
             [this.wte].forEach(initMat);
@@ -56,9 +58,9 @@ export class SimpleBookProcessor {
 
     setupWpe() {
         // Positional Embeddings
-        if (this.cfg.wpeFile) {
-            this.wpe = JSON.parse(this.fileService.readFileSync(this.cfg.wpeFile).toString());
-            this.log('WPE read from file');
+        if (this.cfg.wpe) {
+            this.wpe = this.cfg.wpe;
+            this.log('WPE read from cfg');
         } else {
             this.wpe = zeros(this.cfg.nCtx, this.cfg.nEmbd);      // positional embeddings
             [this.wpe].forEach(initMat);

@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
         table.timestamp('created_at').notNullable().defaultTo(knex.raw('NOW()'));
         table.string('source', 255).notNullable();
         table.integer('corpus_length').notNullable();
+        table.integer('corpus_file').notNullable();
         table.integer('nemb').notNullable();
         table.integer('nctx').notNullable();
         table.integer('nhidden').notNullable();

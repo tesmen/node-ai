@@ -23,6 +23,18 @@ export class ModelEntity {
           .update(data);
     }
 
+    static async load(id: number): Promise<SimpleBookProcessor> {
+        const raw = await ModelEntity.getById(id);
+
+        return new SimpleBookProcessor({
+            corpusFile: raw.corpus_file,
+            nEmbd: raw.nemb,
+            nCtx: raw.nctx,
+            wte: raw.wte,
+            wpe: raw.wpe
+        });
+    }
+
     static async save(model: SimpleBookProcessor) {
         const data: ModelInterface = {
             nemb: model.cfg.nEmbd,
@@ -30,6 +42,7 @@ export class ModelEntity {
             nhidden: model.cfg.nHidden,
             source: model.cfg.corpusFile,
             corpus_length: model.sourceLength,
+            corpus_file: model.cfg.corpusFile,
 
             wpe: JSON.stringify(model.wpe),
             wte: JSON.stringify(model.wte),
@@ -53,6 +66,7 @@ interface ModelInterface {
     nhidden: number;
     token_length?: number;
     corpus_length?: number;
+    corpus_file?: string;
     correct_ratio?: number;
 
     wpe: any;
