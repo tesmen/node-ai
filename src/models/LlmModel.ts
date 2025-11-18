@@ -1,4 +1,4 @@
-import { Model } from '../database/model';
+import { ModelEntity } from '../database/model.entity';
 import { CharTokenizer } from '../services/char.tokenizer';
 import { Matrix } from '../types';
 
@@ -7,7 +7,7 @@ export class LlmModel {
     wpe: Matrix;
     tokenizer: CharTokenizer;
     static async fromDatabase(id: number): Promise<LlmModel> {
-        return await Model.getById(id) as LlmModel;
+        return await ModelEntity.getById(id) as LlmModel;
     }
 
     static create(nemb: number, nctx: number, nHidden: number): LlmModel {
@@ -36,6 +36,6 @@ export class LlmModel {
     }
 
     async save() {
-        await Model.create(this);
+        await ModelEntity.create(this);
     }
 }

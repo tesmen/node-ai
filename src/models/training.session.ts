@@ -1,15 +1,12 @@
 import { ResultEntity } from '../database/result.entity';
-import { RunEntity } from '../database/run.entity';
+import { SessionEntity } from '../database/session.entity';
 import { adjustEmbeddings } from '../fns';
-import { ModelConfig } from '../interfaces/ModelConfig';
-import { CharTokenizer } from '../services/char.tokenizer';
 import { FileServiceAdapter } from '../services/file-service.adapter';
 import { SimpleBookProcessor } from '../services/simple-book.processor';
 import { TrainingSessionConfig } from './training-session.config';
 
 export class TrainingSession {
     cfg: TrainingSessionConfig;
-    tokenizer: CharTokenizer;
     corpusArray: string[];
     corpus: string;
     model: SimpleBookProcessor;
@@ -17,10 +14,8 @@ export class TrainingSession {
     constructor(config: TrainingSessionConfig, model: SimpleBookProcessor) {
         this.cfg = config;
         this.model = model;
-        this.tokenizer = new CharTokenizer();
-        this.corpus = FileServiceAdapter.getTextContent(config.corpusFile);
-        this.tokenizer.init(this.corpus);
-        this.corpusArray = this.tokenizer.separate(this.corpus);
+        this.corpus = FileServiceAdapter.getTextContent(this.model.cfg.corpusFile);
+        this.corpusArray = this.model.tokenizer.separate(this.corpus);
     }
 
     async run(): Promise<void> {
@@ -35,7 +30,7 @@ export class TrainingSession {
             this.log('>>> Iteration finished ', { iteration, round });
 
             await ResultEntity.create({
-                  run_id: this.cfg.id,
+                  session_id: this.cfg.sessionId,
                   error,
                   correct,
                   iteration: iteration,
@@ -43,7 +38,7 @@ export class TrainingSession {
             );
         }
 
-        await RunEntity.finishRun(this.cfg.id, { correct_ratio: round.ratio });
+        await SessionEntity.finishRun(this.cfg.sessionId, { correct_ratio: round.ratio });
     }
 
     // a single run over provided corpus file
@@ -67,10 +62,10 @@ export class TrainingSession {
 
             for (let i = 1; i < sampleArray.length; i++) {
                 const prompt = sampleArray.slice(0, i).join(' ');
-                const ids = this.tokenizer.encode(prompt);
+                const ids = this.model.tokenizer.encode(prompt);
 
                 const logits = this.model.forward(ids);
-                const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
+                const expectedTokenId = this.model.tokenizer.encodeOne(sampleArray[i]);
                 const logit = logits[0];
 
                 if (expectedTokenId !== logit) {

@@ -4,21 +4,18 @@ export class CharTokenizer {
     itos: string[] = [];
     stoi: Map<string, number> = new Map;
     vocabSize: number;
+    private source: string;
 
-    constructor() {
-
-    }
-
-    init(corpus:string) {
-        const set = this.tokenize(corpus);
+    init(corpus: string, save = false) {
+        const set = new Set(this.separate(corpus));
         this.itos = Array.from(set);
         // .sort();
         this.stoi = new Map(this.itos.map((char, index) => [char, index]));
         this.vocabSize = this.itos.length;
-    }
 
-    tokenize(corpus: string) {
-        return new Set(this.separate(corpus));
+        if (save) {
+            this.source = corpus;
+        }
     }
 
     separate(corpus: string) {

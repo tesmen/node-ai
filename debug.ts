@@ -1,4 +1,4 @@
-import { RunEntity } from './src/database/run.entity';
+import { SessionEntity } from './src/database/session.entity';
 import { ModelConfig } from './src/interfaces/ModelConfig';
 import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
@@ -12,27 +12,16 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
         nEmbd: 64,
         nHidden: 128,
         nCtx: 64,
-        iterations: 100,
-        useSlide: false,
         // useSlide: true,
     };
 
     const model = new SimpleBookProcessor(cfg);
 
-    cfg.id = await RunEntity.createRun2(
+    cfg.id = await SessionEntity.create(
       {
-          source: cfg.corpusFile,
-          nemb: cfg.nEmbd,
-          nctx: cfg.nCtx,
-          iterations: cfg.iterations,
-          corpus_length: model.getCorpus().length,
-          wte_length: model.wte.length,
-          window_size: cfg.trainWindow,
-          use_slide: cfg.useSlide,
+          iterations: 100,
       }
     );
-
-    await model.trainIterations(cfg);
 
     const a = model.generate('The', 20);
     console.log(a);

@@ -12,6 +12,8 @@ export async function up(knex: Knex): Promise<void> {
         table.integer('nhidden').notNullable();
         table.json('wte');
         table.json('wpe');
+        table.json('itos');
+        table.json('stoi');
     });
 }
 

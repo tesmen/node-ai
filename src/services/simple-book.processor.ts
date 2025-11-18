@@ -1,7 +1,4 @@
-import { ResultEntity } from '../database/result.entity';
-import { RunEntity } from '../database/run.entity';
 import {
-    adjustEmbeddings,
     dotProduct,
     initMat,
     layerNormRowwise,
@@ -15,17 +12,21 @@ import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
 
 export class SimpleBookProcessor {
+    id: number;
     wte: Matrix = [];
     wpe: Matrix = [];
     fileService: FileServiceAdapter;
     tokenizer: CharTokenizer;
     cfg: ModelConfig;
+    sourceLength: number;
 
     constructor(cfg: ModelConfig) {
         this.cfg = cfg;
         this.fileService = new FileServiceAdapter();
         this.tokenizer = new CharTokenizer();
-        this.tokenizer.init(FileServiceAdapter.getTextContent(this.cfg.corpusFile));
+        const corpus = FileServiceAdapter.getTextContent(this.cfg.corpusFile);
+        this.tokenizer.init(corpus);
+        this.sourceLength = corpus.length;
         this.setupWte();
         this.setupWpe();
 
@@ -79,88 +80,7 @@ export class SimpleBookProcessor {
         };
     }
 
-    async trainIterations(config: ModelConfig): Promise<void> {
-        let round = { error: 0, correct: 0, ratio: 0 };
-
-        for (let iteration = 0; iteration < config.iterations; iteration++) {
-            const windowSize = config.trainWindow || config.nCtx;
-            const { error, correct, shift } = this.train(windowSize, iteration);
-            round.correct = correct;
-            round.error = error;
-            round.ratio = Number((round.correct / (round.error + round.correct)).toFixed(3)) || 0;
-            this.log('>>> Iteration finished ', { iteration, round });
-
-            await ResultEntity.create({
-                  run_id: config.id,
-                  error,
-                  correct,
-                  iteration: iteration,
-              }
-            );
-        }
-
-        await RunEntity.finishRun(this.cfg.id, { correct_ratio: round.ratio });
-    }
-
-    // a single run over provided corpus file
-    train(windowSize: number, iteration: number): { error: number; correct: number; shift: number } {
-        const corpusArray: string[] = this.tokenizer.separate(this.getCorpus());
-        let sampleArray: string[];
-        let step = 0;
-        let error = 0;
-        let correct = 0;
-        let shift;
-
-        if (this.cfg.useSlide) {
-            shift = corpusArray.length < windowSize
-              ? iteration % corpusArray.length
-              : iteration % windowSize;
-        } else {
-            shift = 0;
-        }
-
-        while ((sampleArray = corpusArray.slice(shift + step * windowSize, shift + (step + 1) * windowSize)).length) {
-            step++;
-
-            for (let i = 1; i < sampleArray.length; i++) {
-                const prompt = sampleArray.slice(0, i).join(' ');
-                const ids = this.tokenizer.encode(prompt);
-
-                const logits = this.forward(ids);
-                const expectedTokenId = this.tokenizer.encodeOne(sampleArray[i]);
-                const logit = logits[0];
-
-                if (expectedTokenId !== logit) {
-                    const promptVector = this.createPromptVector(ids);
-                    const adjusted = adjustEmbeddings(promptVector, this.embed(expectedTokenId));
-                    this.wte[expectedTokenId] = adjusted.newTarget;
-                    // this.wte[logit  ] = adjusted.newTarget;
-                    // this.log('adjusted.', JSON.stringify(adjusted.newTarget));
-                    // this.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
-                    error++;
-                } else {
-                    correct++;
-                }
-
-                // this.log('training on:',
-                //   {
-                //       sampleArray: sampleArray.join(' '),
-                //       shift,
-                //       prompt,
-                //       expected: sampleArray[i],
-                //       logitText: this.tokenizer.decodeOne(logit),
-                //       logits: logits.slice(0, 10),
-                //       logit: logits[0],
-                //       correct: expectedTokenId === logit,
-                //   }
-                // );
-            }
-        }
-
-        return { error, correct, shift };
-    }
-
-    private buildPromptMatrix(inputIds: number[]) {
+    buildPromptMatrix(inputIds: number[]) {
         let promptMatrix = zeros(inputIds.length, this.cfg.nEmbd);
         // this.log({ promptMatrix });
 

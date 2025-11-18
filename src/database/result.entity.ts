@@ -13,7 +13,7 @@ export class ResultEntity {
 
 interface ResultInterface {
     id?: number;
-    run_id: number;
+    session_id: number;
     iteration: number;
     error: number;
     correct: number;
