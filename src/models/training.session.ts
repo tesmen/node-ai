@@ -1,3 +1,4 @@
+import { ModelEntity } from '../database/model.entity';
 import { ResultEntity } from '../database/result.entity';
 import { SessionEntity } from '../database/session.entity';
 import { adjustEmbeddings } from '../fns';
@@ -39,6 +40,7 @@ export class TrainingSession {
         }
 
         await SessionEntity.finishRun(this.cfg.sessionId, { correct_ratio: round.ratio });
+        await ModelEntity.save(this.model)
     }
 
     // a single run over provided corpus file

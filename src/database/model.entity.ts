@@ -17,6 +17,11 @@ export class ModelEntity {
         return res.pop() as ModelInterface;
     }
 
+    static async update(id: number, data: ModelInterface) {
+        await db('models')
+          .where({ id })
+          .update(data);
+    }
 
     static async save(model: SimpleBookProcessor) {
         const data: ModelInterface = {
@@ -24,10 +29,17 @@ export class ModelEntity {
             nctx: model.cfg.nCtx,
             nhidden: model.cfg.nHidden,
             source: model.cfg.corpusFile,
-            corpus_length: model.sourceLength
+            corpus_length: model.sourceLength,
+
+            wpe: JSON.stringify(model.wpe),
+            wte: JSON.stringify(model.wte),
         };
 
-        model.id = await ModelEntity.create(data);
+        if (model.id) {
+            await ModelEntity.update(model.id, data);
+        } else {
+            model.id = await ModelEntity.create(data);
+        }
     }
 }
 
@@ -42,4 +54,7 @@ interface ModelInterface {
     token_length?: number;
     corpus_length?: number;
     correct_ratio?: number;
+
+    wpe: any;
+    wte: any;
 }
