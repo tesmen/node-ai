@@ -1,6 +1,6 @@
 import db from '../../db/knex';
 
-export class Result {
+export class ResultEntity {
     static async create(data: ResultInterface): Promise<number> {
         const res = await db('results')
           .insert(data)

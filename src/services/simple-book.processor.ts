@@ -1,5 +1,5 @@
-import { Result } from '../database/result';
-import { Runs } from '../database/runs';
+import { ResultEntity } from '../database/result.entity';
+import { RunEntity } from '../database/run.entity';
 import {
     adjustEmbeddings,
     dotProduct,
@@ -19,7 +19,7 @@ export class SimpleBookProcessor {
     wpe: Matrix = [];
     fileService: FileServiceAdapter;
     tokenizer: CharTokenizer;
-    private cfg: ModelConfig;
+    cfg: ModelConfig;
 
     constructor(cfg: ModelConfig) {
         this.cfg = cfg;
@@ -90,7 +90,7 @@ export class SimpleBookProcessor {
             round.ratio = Number((round.correct / (round.error + round.correct)).toFixed(3)) || 0;
             this.log('>>> Iteration finished ', { iteration, round });
 
-            await Result.create({
+            await ResultEntity.create({
                   run_id: config.id,
                   error,
                   correct,
@@ -99,7 +99,7 @@ export class SimpleBookProcessor {
             );
         }
 
-        await Runs.finishRun(this.cfg.id, { correct_ratio: round.ratio });
+        await RunEntity.finishRun(this.cfg.id, { correct_ratio: round.ratio });
     }
 
     // a single run over provided corpus file
@@ -176,7 +176,7 @@ export class SimpleBookProcessor {
         return promptMatrix;
     }
 
-    private createPromptVector(promptIds: number[]): Vector {
+    createPromptVector(promptIds: number[]): Vector {
         let promptMatrix = this.buildPromptMatrix(promptIds);
         const normalizedX = layerNormRowwise(promptMatrix, 1e-5);
         const resultingVector = reduceM2Vector(normalizedX);
@@ -185,7 +185,7 @@ export class SimpleBookProcessor {
         return normalizedResVector;
     }
 
-    private forward(inputIds: number[]): number[] {
+    forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
         return this.findTopKCandidates(promptVector, this.wte);
     }

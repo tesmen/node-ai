@@ -1,4 +1,4 @@
-import { Runs } from './src/database/runs';
+import { RunEntity } from './src/database/run.entity';
 import { ModelConfig } from './src/interfaces/ModelConfig';
 import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
@@ -19,7 +19,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
     const model = new SimpleBookProcessor(cfg);
 
-    cfg.id = await Runs.createRun2(
+    cfg.id = await RunEntity.createRun2(
       {
           source: cfg.corpusFile,
           nemb: cfg.nEmbd,

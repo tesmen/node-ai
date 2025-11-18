@@ -1,6 +1,6 @@
 import db from '../../db/knex';
 
-export class Runs {
+export class RunEntity {
     static async createRun(source: string,
                            nemb: number,
                            nctx: number,
