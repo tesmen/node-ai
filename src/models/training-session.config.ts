@@ -1,5 +1,11 @@
 export class TrainingSessionConfig {
-    iterations: number;
-    useSlide: false;
-    sessionId?: number;
+    id?: number;
+    model_id?: number;
+    created_at?: number;
+    finished_at?: number;
+    iterations?: number;
+    correct_ratio?: number;
+    window_size?: number;
+    use_slide?: boolean;
+    adjust_pte?: boolean;
 }

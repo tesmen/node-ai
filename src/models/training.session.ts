@@ -31,7 +31,7 @@ export class TrainingSession {
             this.log('>>> Iteration finished ', { iteration, round });
 
             await ResultEntity.create({
-                  session_id: this.cfg.sessionId,
+                  session_id: this.cfg.id,
                   error,
                   correct,
                   iteration: iteration,
@@ -39,7 +39,7 @@ export class TrainingSession {
             );
         }
 
-        await SessionEntity.finishRun(this.cfg.sessionId, { correct_ratio: round.ratio });
+        await SessionEntity.finishRun(this.cfg.id, { correct_ratio: round.ratio });
         await ModelEntity.save(this.model)
     }
 
@@ -51,7 +51,7 @@ export class TrainingSession {
         let correct = 0;
         let shift;
 
-        if (this.cfg.useSlide) {
+        if (this.cfg.use_slide) {
             shift = this.corpusArray.length < windowSize
               ? iteration % this.corpusArray.length
               : iteration % windowSize;

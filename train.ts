@@ -18,7 +18,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
     const model = new SimpleBookProcessor(modelCfg);
     await ModelEntity.save(model);
 
-    const sessionConfig = await SessionEntity.createConfig(
+    const sessionConfig = await SessionEntity.create(
       {
           model_id: model.id,
           iterations: 500,
