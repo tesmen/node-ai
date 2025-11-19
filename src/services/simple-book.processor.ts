@@ -19,13 +19,19 @@ export class SimpleBookProcessor {
     cfg: ModelConfig;
     sourceLength: number;
 
-    constructor(cfg: ModelConfig) {
+    constructor(cfg: ModelConfig, tokenizer: CharTokenizer = null) {
         this.id = cfg.id;
         this.cfg = cfg;
-        this.tokenizer = new CharTokenizer();
-        const corpus = FileServiceAdapter.getTextContent(this.cfg.corpusFile);
-        this.tokenizer.init(corpus);
-        this.sourceLength = corpus.length;
+
+        if (tokenizer) {
+            this.tokenizer = tokenizer;
+        } else {
+            this.tokenizer = new CharTokenizer();
+            const corpus = FileServiceAdapter.getTextContent(this.cfg.corpusFile);
+            this.tokenizer.init(corpus);
+            this.sourceLength = corpus.length;
+        }
+
         this.setupWte();
         this.setupWpe();
 

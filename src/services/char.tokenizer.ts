@@ -6,6 +6,12 @@ export class CharTokenizer {
     vocabSize: number;
     private source: string;
 
+
+    constructor(itos: string[] = null, stoi: Map<string, number> = null) {
+        this.itos = itos;
+        this.stoi = stoi;
+    }
+
     init(corpus: string, save = false) {
         const set = new Set(this.separate(corpus));
         this.itos = Array.from(set);

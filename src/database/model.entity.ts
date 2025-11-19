@@ -1,4 +1,5 @@
 import db from '../../db/knex';
+import { CharTokenizer } from '../services/char.tokenizer';
 import { SimpleBookProcessor } from '../services/simple-book.processor';
 
 export class ModelEntity {
@@ -25,15 +26,19 @@ export class ModelEntity {
 
     static async load(id: number): Promise<SimpleBookProcessor> {
         const raw = await ModelEntity.getById(id);
+        const tokenizer = new CharTokenizer(raw.itos, new Map(raw.stoi));
 
-        return new SimpleBookProcessor({
-            corpusFile: raw.source,
-            nEmbd: raw.nemb,
-            nCtx: raw.nctx,
-            wte: raw.wte,
-            wpe: raw.wpe,
-            id: raw.id
-        });
+        return new SimpleBookProcessor(
+          {
+              corpusFile: raw.source,
+              nEmbd: raw.nemb,
+              nCtx: raw.nctx,
+              wte: raw.wte,
+              wpe: raw.wpe,
+              id: raw.id
+          },
+          tokenizer
+        );
     }
 
     static async save(model: SimpleBookProcessor) {
@@ -46,6 +51,8 @@ export class ModelEntity {
 
             wpe: JSON.stringify(model.wpe),
             wte: JSON.stringify(model.wte),
+            itos: JSON.stringify(model.tokenizer.itos),
+            stoi: JSON.stringify(Array.from(model.tokenizer.stoi.entries())),
         };
 
         if (model.id) {
@@ -70,4 +77,7 @@ interface ModelInterface {
 
     wpe: any;
     wte: any;
+
+    itos: any;
+    stoi: any;
 }
