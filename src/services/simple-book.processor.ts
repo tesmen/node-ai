@@ -15,14 +15,13 @@ export class SimpleBookProcessor {
     id: number;
     wte: Matrix = [];
     wpe: Matrix = [];
-    fileService: FileServiceAdapter;
     tokenizer: CharTokenizer;
     cfg: ModelConfig;
     sourceLength: number;
 
     constructor(cfg: ModelConfig) {
+        this.id = cfg.id;
         this.cfg = cfg;
-        this.fileService = new FileServiceAdapter();
         this.tokenizer = new CharTokenizer();
         const corpus = FileServiceAdapter.getTextContent(this.cfg.corpusFile);
         this.tokenizer.init(corpus);
@@ -38,11 +37,6 @@ export class SimpleBookProcessor {
               vocabSize: this.tokenizer.vocabSize
           }
         );
-    }
-
-    saveWeights(prefix: string) {
-        this.fileService.writeFileSync(`./weights/wpe-${prefix}.json`, JSON.stringify(this.wpe));
-        this.fileService.writeFileSync(`./weights/wte-${prefix}.json`, JSON.stringify(this.wte));
     }
 
     setupWte() {
@@ -110,12 +104,6 @@ export class SimpleBookProcessor {
     forward(inputIds: number[]): number[] {
         const promptVector = this.createPromptVector(inputIds);
         return this.findTopKCandidates(promptVector, this.wte);
-    }
-
-    getCorpus(): string {
-        const content = this.fileService.readFileSync(this.cfg.corpusFile);
-
-        return content.toString();
     }
 
     findTopKCandidates(v: Vector, embeddings: Matrix, k = 5): number[] {

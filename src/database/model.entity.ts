@@ -27,11 +27,12 @@ export class ModelEntity {
         const raw = await ModelEntity.getById(id);
 
         return new SimpleBookProcessor({
-            corpusFile: raw.corpus_file,
+            corpusFile: raw.source,
             nEmbd: raw.nemb,
             nCtx: raw.nctx,
             wte: raw.wte,
-            wpe: raw.wpe
+            wpe: raw.wpe,
+            id: raw.id
         });
     }
 
@@ -42,7 +43,6 @@ export class ModelEntity {
             nhidden: model.cfg.nHidden,
             source: model.cfg.corpusFile,
             corpus_length: model.sourceLength,
-            corpus_file: model.cfg.corpusFile,
 
             wpe: JSON.stringify(model.wpe),
             wte: JSON.stringify(model.wte),
@@ -66,7 +66,6 @@ interface ModelInterface {
     nhidden: number;
     token_length?: number;
     corpus_length?: number;
-    corpus_file?: string;
     correct_ratio?: number;
 
     wpe: any;

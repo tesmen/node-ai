@@ -5,10 +5,8 @@ export interface ModelConfig {
     nHidden?: number;
     nEmbd?: number;
     corpusFile: string;
-    // wpeFile?: string;
-    // wteFile?: string;
     id?: number;
 
-    wte?: any;
-    wpe?: any;
+    wte?: Matrix;
+    wpe?: Matrix;
 }
