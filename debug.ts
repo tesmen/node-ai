@@ -6,7 +6,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
     const cfg: ModelConfig = {
         // corpusFile: './books/Robert Sheckley - The Dream of Misunderstanding - 2002.txt',
         // corpusFile: './books/candp.nano.txt',
-        corpusFile: './books/candp.min.txt',
+        source: './books/candp.min.txt',
         // corpusFile: './books/candp.med.txt',
         // corpusFile: './books/candp.txt',
         nEmbd: 64,

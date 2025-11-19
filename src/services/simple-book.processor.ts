@@ -27,7 +27,7 @@ export class SimpleBookProcessor {
             this.tokenizer = tokenizer;
         } else {
             this.tokenizer = new CharTokenizer();
-            const corpus = FileServiceAdapter.getTextContent(this.cfg.corpusFile);
+            const corpus = FileServiceAdapter.getTextContent(this.cfg.source);
             this.tokenizer.init(corpus);
             this.sourceLength = corpus.length;
         }
@@ -68,6 +68,9 @@ export class SimpleBookProcessor {
     }
 
     generate(prompt: string, maxNewTokens: number = 20) {
+        if(maxNewTokens> this.cfg.nCtx){
+            throw Error(`Context length exceeded of ${this.cfg.nCtx} by ${maxNewTokens}`)
+        }
         const ids = this.tokenizer.encode(prompt);
         // this.log(ids);
 

@@ -30,7 +30,7 @@ export class ModelEntity {
 
         return new SimpleBookProcessor(
           {
-              corpusFile: raw.source,
+              source: raw.source,
               nEmbd: raw.nemb,
               nCtx: raw.nctx,
               wte: raw.wte,
@@ -46,7 +46,7 @@ export class ModelEntity {
             nemb: model.cfg.nEmbd,
             nctx: model.cfg.nCtx,
             nhidden: model.cfg.nHidden,
-            source: model.cfg.corpusFile,
+            source: model.cfg.source,
             corpus_length: model.sourceLength,
 
             wpe: JSON.stringify(model.wpe),

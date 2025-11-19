@@ -12,6 +12,7 @@ export async function up(knex: Knex): Promise<void> {
               table.integer('window_size');
               table.float('correct_ratio').nullable();
               table.boolean('use_slide').nullable().defaultTo(false);
+              table.boolean('adjust_pte').nullable().defaultTo(false);
         });
 }
 

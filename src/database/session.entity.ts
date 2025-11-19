@@ -45,4 +45,5 @@ interface SessionInterface {
     correct_ratio?: number;
     window_size?: number;
     use_slide?: boolean;
+    adjust_pte?: boolean;
 }

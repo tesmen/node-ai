@@ -15,7 +15,7 @@ export class TrainingSession {
     constructor(config: TrainingSessionConfig, model: SimpleBookProcessor) {
         this.cfg = config;
         this.model = model;
-        this.corpus = FileServiceAdapter.getTextContent(this.model.cfg.corpusFile);
+        this.corpus = FileServiceAdapter.getTextContent(this.model.cfg.source);
         this.corpusArray = this.model.tokenizer.separate(this.corpus);
     }
 

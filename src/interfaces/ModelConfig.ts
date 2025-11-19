@@ -4,7 +4,7 @@ export interface ModelConfig {
     nCtx?: number;
     nHidden?: number;
     nEmbd?: number;
-    corpusFile: string;
+    source: string;
     id?: number;
 
     wte?: Matrix;

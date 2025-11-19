@@ -1,1 +1,0 @@
-stat created using 500 iterations 

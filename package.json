@@ -2,10 +2,10 @@
   "name": "vanilla",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "train.ts",
   "scripts": {
     "test": "jest",
-    "train": "tsx index.ts",
+    "train": "tsx train.ts",
     "gen": "tsx generate.ts",
     "dev": "echo 1"
   },
