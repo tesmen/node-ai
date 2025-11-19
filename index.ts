@@ -7,8 +7,8 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
 
 (async () => {
     const modelCfg: ModelConfig = {
-        corpusFile: './books/candp.nano.txt',
-        // corpusFile: './books/candp.min.txt',
+        // corpusFile: './books/candp.nano.txt',
+        corpusFile: './books/candp.min.txt',
         // corpusFile: './books/candp.med.txt',
         // corpusFile: './books/candp.txt',
         nEmbd: 64,
@@ -19,21 +19,14 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
     const model = new SimpleBookProcessor(modelCfg);
     await ModelEntity.save(model);
 
-    const runId = await SessionEntity.create(
+    const sessionConfig = await SessionEntity.createConfig(
       {
           model_id: model.id,
-          iterations: 100,
+          iterations: 500,
           window_size: modelCfg.nCtx,
           use_slide: false,
       }
     );
-
-    const sessionConfig = {
-        corpusFile: './books/candp.min.txt',
-        sessionId: runId,
-        iterations: 100,
-        useSlide: false,
-    } as TrainingSessionConfig;
 
     const session = new TrainingSession(sessionConfig, model);
     await session.run();

@@ -5,8 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "test": "jest",
-    "go": "tsx index.ts",
-    "debug": "tsx debug.ts",
+    "train": "tsx index.ts",
+    "gen": "tsx generate.ts",
     "dev": "echo 1"
   },
   "author": "",
