@@ -74,9 +74,6 @@ export class TrainingSession {
                     const promptVector = this.model.createPromptVector(ids);
                     const adjusted = adjustEmbeddings(promptVector, this.model.embed(expectedTokenId));
                     this.model.wte[expectedTokenId] = adjusted.newTarget;
-                    // this.wte[logit  ] = adjusted.newTarget;
-                    // this.log('adjusted.', JSON.stringify(adjusted.newTarget));
-                    // this.log('adjusted.oldTarget', JSON.stringify(this.embed(expectedTokenId)));
                     error++;
                 } else {
                     correct++;

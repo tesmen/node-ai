@@ -1,29 +1,5 @@
 import { Matrix, Vector } from './types';
 
-export function layerNormRowwise(X: Matrix, eps = 1e-5, gamma: Vector = null, beta: Vector = null) {
-    const m = X.length, n = X[0].length;
-    const out = zeros(m, n);
-
-    for (let i = 0; i < m; i++) {
-        let mean = 0;
-        for (let j = 0; j < n; j++) mean += X[i][j];
-        mean /= n;
-        let varSum = 0;
-        for (let j = 0; j < n; j++) {
-            const d = X[i][j] - mean;
-            varSum += d * d;
-        }
-        const invStd = 1 / Math.sqrt(varSum / n + eps);
-        for (let j = 0; j < n; j++) {
-            let v = (X[i][j] - mean) * invStd;
-            if (gamma) v *= gamma[j];
-            if (beta) v += beta[j];
-            out[i][j] = v;
-        }
-    }
-    return out;
-}
-
 export function reduceM2Vector(M: Matrix): Vector {
     const vectorLength = M[0].length;
     const res: Vector = (new Array(vectorLength)).fill(0);
@@ -38,7 +14,7 @@ export function reduceM2Vector(M: Matrix): Vector {
     return res;
 }
 
-export function normalizeVector(v: Vector) {
+export function normalizeVectorL2(v: Vector) {
     const norm = Math.sqrt(
       v.reduce((acc, num) => acc + num * num, 0)
     );
@@ -108,4 +84,48 @@ export function adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningR
     }
 
     return { newPrompt, newTarget };
+}
+
+export function layerNormRowwise(matrix: Matrix, eps = 1e-5, gamma: Vector = null, beta: Vector = null): Matrix {
+    const rows = matrix.length;
+    const columns = matrix[0].length;
+    const out = zeros(rows, columns);
+
+    for (let ri = 0; ri < rows; ri++) {
+        let mean = 0;
+
+        for (let ci = 0; ci < columns; ci++) {
+            mean += matrix[ri][ci];
+        }
+
+        mean /= columns;
+        console.log({ mean });
+        let varianceSum = 0;
+
+        for (let ci = 0; ci < columns; ci++) {
+            const delta = matrix[ri][ci] - mean;
+            varianceSum += delta ** 2;
+        }
+        console.log({varianceSum})
+        // Compute 1 / standard deviation
+        const invStd = 1 / Math.sqrt(varianceSum / columns + eps);
+        console.log({ invStd });
+        for (let ci = 0; ci < columns; ci++) {
+            let val = (matrix[ri][ci] - mean) * invStd;
+            if (gamma) val *= gamma[ci];
+            if (beta) val += beta[ci];
+            out[ri][ci] = val;
+        }
+    }
+
+    return out;
+}
+
+export function layerNorm1D(v: Vector, eps = 1e-5): Vector {
+    const n = v.length;
+    const mean = v.reduce((a, x) => a + x, 0) / n;
+    const variance = v.reduce((a, x) => a + (x - mean) ** 2, 0) / n;
+    const invStd = 1 / Math.sqrt(variance + eps);
+
+    return v.map(x => (x - mean) * invStd);
 }

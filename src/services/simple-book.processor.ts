@@ -2,7 +2,7 @@ import {
     dotProduct,
     initMat,
     layerNormRowwise,
-    normalizeVector,
+    normalizeVectorL2,
     reduceM2Vector,
     zeros
 } from '../fns';
@@ -85,9 +85,8 @@ export class SimpleBookProcessor {
         };
     }
 
-    buildPromptMatrix(inputIds: number[]) {
+    buildPromptMatrix(inputIds: number[]): Matrix {
         let promptMatrix = zeros(inputIds.length, this.cfg.nEmbd);
-        // this.log({ promptMatrix });
 
         for (let inputsArrIndex = 0; inputsArrIndex < inputIds.length; inputsArrIndex++) {
             const token = this.wte[inputIds[inputsArrIndex]];
@@ -105,7 +104,7 @@ export class SimpleBookProcessor {
         let promptMatrix = this.buildPromptMatrix(promptIds);
         const normalizedX = layerNormRowwise(promptMatrix, 1e-5);
         const resultingVector = reduceM2Vector(normalizedX);
-        const normalizedResVector = normalizeVector(resultingVector);
+        const normalizedResVector = normalizeVectorL2(resultingVector);
 
         return normalizedResVector;
     }
