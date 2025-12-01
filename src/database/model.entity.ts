@@ -1,6 +1,6 @@
 import db from '../../db/knex';
 import { CharTokenizer } from '../services/char.tokenizer';
-import { SimpleBookProcessor } from '../services/simple-book.processor';
+import { SimpleModel } from '../services/simple.model';
 
 export class ModelEntity {
     static async create(data: ModelInterface): Promise<number> {
@@ -24,11 +24,11 @@ export class ModelEntity {
           .update(data);
     }
 
-    static async load(id: number): Promise<SimpleBookProcessor> {
+    static async load(id: number): Promise<SimpleModel> {
         const raw = await ModelEntity.getById(id);
         const tokenizer = new CharTokenizer(raw.itos, new Map(raw.stoi));
 
-        return new SimpleBookProcessor(
+        return new SimpleModel(
           {
               source: raw.source,
               nEmbd: raw.nemb,
@@ -41,7 +41,7 @@ export class ModelEntity {
         );
     }
 
-    static async save(model: SimpleBookProcessor) {
+    static async save(model: SimpleModel) {
         const data: ModelInterface = {
             nemb: model.cfg.nEmbd,
             nctx: model.cfg.nCtx,

@@ -2,7 +2,7 @@ import { ModelEntity } from './src/database/model.entity';
 import { SessionEntity } from './src/database/session.entity';
 import { ModelConfig } from './src/interfaces/ModelConfig';
 import { TrainingSession } from './src/models/training.session';
-import { SimpleBookProcessor } from './src/services/simple-book.processor';
+import { SimpleModel } from './src/services/simple.model';
 
 (async () => {
     const modelCfg: ModelConfig = {
@@ -15,13 +15,13 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
         nCtx: 64,
     };
 
-    const model = new SimpleBookProcessor(modelCfg);
+    const model = new SimpleModel(modelCfg);
     await ModelEntity.save(model);
 
     const sessionConfig = await SessionEntity.create(
       {
           model_id: model.id,
-          iterations: 500,
+          iterations: 200,
           window_size: modelCfg.nCtx,
           use_slide: false,
           adjust_pte: true,

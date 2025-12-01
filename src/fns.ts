@@ -10,7 +10,6 @@ export function reduceM2Vector(M: Matrix): Vector {
         }
     }
 
-    // this.log({ res })
     return res;
 }
 
@@ -18,7 +17,6 @@ export function normalizeVectorL2(v: Vector) {
     const norm = Math.sqrt(
       v.reduce((acc, num) => acc + num * num, 0)
     );
-    // this.log({norm})
 
     return v.map(x => x / (norm || 1));
 }
@@ -69,6 +67,16 @@ export function dotProduct(a: Vector, b: Vector) {
 }
 
 
+export function calculateErrorVector(correct: Vector, predicted: Vector): Vector {
+    const errorVec = new Array(correct.length);
+
+    for (let d = 0; d < correct.length; d++) {
+        errorVec[d] = correct[d] - predicted[d];
+    }
+
+    return errorVec;
+}
+
 export function adjustEmbeddings(promptVec: Vector, targetVec: Vector, learningRate = 0.05) {
     if (promptVec.length !== targetVec.length) {
         throw new Error('Vectors must have the same length');
@@ -99,17 +107,17 @@ export function layerNormRowwise(matrix: Matrix, eps = 1e-5, gamma: Vector = nul
         }
 
         mean /= columns;
-        console.log({ mean });
+        // console.log({ mean });
         let varianceSum = 0;
 
         for (let ci = 0; ci < columns; ci++) {
             const delta = matrix[ri][ci] - mean;
             varianceSum += delta ** 2;
         }
-        console.log({varianceSum})
+        // console.log({varianceSum})
         // Compute 1 / standard deviation
         const invStd = 1 / Math.sqrt(varianceSum / columns + eps);
-        console.log({ invStd });
+        // console.log({ invStd });
         for (let ci = 0; ci < columns; ci++) {
             let val = (matrix[ri][ci] - mean) * invStd;
             if (gamma) val *= gamma[ci];

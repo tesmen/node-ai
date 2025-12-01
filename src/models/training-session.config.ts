@@ -8,4 +8,5 @@ export class TrainingSessionConfig {
     window_size?: number;
     use_slide?: boolean;
     adjust_pte?: boolean;
+    // learning_rate: 0.05;
 }

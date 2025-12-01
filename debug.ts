@@ -1,6 +1,6 @@
 import { SessionEntity } from './src/database/session.entity';
 import { ModelConfig } from './src/interfaces/ModelConfig';
-import { SimpleBookProcessor } from './src/services/simple-book.processor';
+import { SimpleModel } from './src/services/simple.model';
 
 (async () => {
     const cfg: ModelConfig = {
@@ -15,7 +15,7 @@ import { SimpleBookProcessor } from './src/services/simple-book.processor';
         // useSlide: true,
     };
 
-    const model = new SimpleBookProcessor(cfg);
+    const model = new SimpleModel(cfg);
 
     cfg.id = await SessionEntity.create(
       {

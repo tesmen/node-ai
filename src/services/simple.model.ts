@@ -11,7 +11,7 @@ import { Matrix, Vector } from '../types';
 import { FileServiceAdapter } from './file-service.adapter';
 import { CharTokenizer } from './char.tokenizer';
 
-export class SimpleBookProcessor {
+export class SimpleModel {
     id: number;
     wte: Matrix = [];
     wpe: Matrix = [];
