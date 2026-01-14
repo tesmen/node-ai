@@ -6,8 +6,9 @@ import { SimpleModel } from './src/services/simple.model';
 
 (async () => {
     const modelCfg: ModelConfig = {
+        // source: './books/abc.txt',
         // source: './books/candp.nano.txt',
-        source: './books/abc.txt',
+        source: './books/candp.min.txt',
         // source: './books/candp.med.txt',
         // source: './books/candp.txt',
         nEmbd: 64,
